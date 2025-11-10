@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { BookOpen, Eye, Heart, Clock, User, ChevronRight, MessageCircle, Share2, Bookmark, Edit, Plus } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useSocial } from '../contexts/SocialContext';
 import SocialActions from '../components/SocialActions';
 import CommentSection from '../components/CommentSection';
 import FollowButton from '../components/FollowButton';
@@ -11,15 +12,33 @@ import { db } from '../lib/firebase';
 const StoryDetail = () => {
   const { storyId } = useParams();
   const { currentUser } = useAuth();
+  const { incrementView, getViewCount, getLikeCount } = useSocial();
   const [story, setStory] = useState(null);
   const [chapters, setChapters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showComments, setShowComments] = useState(false);
   const [selectedChapter, setSelectedChapter] = useState(null);
+  const [viewCount, setViewCount] = useState(0);
+  const [likeCount, setLikeCount] = useState(0);
 
   useEffect(() => {
     fetchStoryDetail();
+    // Increment view count when story is opened
+    incrementView(storyId, 'story');
   }, [storyId]);
+
+  useEffect(() => {
+    if (storyId) {
+      loadCounts();
+    }
+  }, [storyId]);
+
+  const loadCounts = async () => {
+    const views = await getViewCount(storyId, 'story');
+    const likes = await getLikeCount(storyId, 'story');
+    setViewCount(views);
+    setLikeCount(likes);
+  };
 
   const fetchStoryDetail = async () => {
     setLoading(true);

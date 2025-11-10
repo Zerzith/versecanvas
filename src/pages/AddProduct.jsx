@@ -93,18 +93,23 @@ export default function AddProduct() {
       }
 
       // บันทึกข้อมูลสินค้าลง Firestore
+      const sellerName = userProfile?.displayName || currentUser.displayName || 'Anonymous';
       const productData = {
         title: title.trim(),
         description: description.trim(),
         price: parseFloat(price),
         category,
         image: imageUrl,
-        seller: userProfile?.displayName || currentUser.displayName || 'Anonymous',
+        seller: sellerName,
         sellerId: currentUser.uid,
-        sellerAvatar: userProfile?.photoURL || currentUser.photoURL || '',
-        rating: 0,
+        sellerAvatar: userProfile?.photoURL || currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(sellerName)}&background=random`,
+        rating: 5.0,
         sales: 0,
         featured: false,
+        views: 0,
+        likes: 0,
+        likedBy: [],
+        purchasedBy: [],
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       };

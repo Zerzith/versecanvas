@@ -218,6 +218,30 @@ export const SocialProvider = ({ children }) => {
     }
   };
 
+  // ========== VIEW SYSTEM ==========
+  const incrementView = async (postId, postType = 'artwork') => {
+    const viewRef = ref(realtimeDb, `views/${postType}/${postId}`);
+    
+    try {
+      await update(viewRef, { count: increment(1) });
+      return true;
+    } catch (error) {
+      console.error('Error incrementing view:', error);
+      return false;
+    }
+  };
+
+  const getViewCount = async (postId, postType = 'artwork') => {
+    const viewRef = ref(realtimeDb, `views/${postType}/${postId}`);
+    try {
+      const snapshot = await get(viewRef);
+      return snapshot.exists() ? snapshot.val().count : 0;
+    } catch (error) {
+      console.error('Error getting view count:', error);
+      return 0;
+    }
+  };
+
   // ========== BOOKMARK SYSTEM ==========
   const bookmarkPost = async (postId, postType = 'artwork') => {
     if (!currentUser) return false;
@@ -311,7 +335,11 @@ export const SocialProvider = ({ children }) => {
     // Bookmark functions
     bookmarkPost,
     isBookmarked,
-    getBookmarks
+    getBookmarks,
+    
+    // View functions
+    incrementView,
+    getViewCount
   };
 
   return (

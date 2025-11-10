@@ -90,9 +90,13 @@ const CreateStory = ({ currentLanguage }) => {
         tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag),
         authorId: currentUser.uid,
         authorName: userProfile?.displayName || currentUser.displayName || 'Anonymous',
+        authorAvatar: userProfile?.photoURL || currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userProfile?.displayName || currentUser.displayName || 'User')}&background=random`,
         status: 'published',
+        chapters: 1,
         views: 0,
         likes: 0,
+        likedBy: [],
+        bookmarkedBy: [],
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       };
