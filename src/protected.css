@@ -1,0 +1,52 @@
+/* ป้องกันการ Select Text */
+.protected-content,
+.protected-content * {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* ป้องกันการลากรูป */
+.protected-content img,
+.protected-image {
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  user-drag: none;
+  pointer-events: none;
+}
+
+/* ป้องกันการ Print */
+@media print {
+  .protected-content {
+    display: none !important;
+  }
+}
+
+/* Watermark สำหรับรูปภาพ */
+.watermarked-image {
+  position: relative;
+  display: inline-block;
+}
+
+.watermarked-image::after {
+  content: 'PREVIEW';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-45deg);
+  font-size: 4rem;
+  font-weight: bold;
+  color: rgba(255, 255, 255, 0.3);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  letter-spacing: 0.2em;
+  z-index: 10;
+}
+
+/* ป้องกันการคลิกขวา */
+.no-context-menu {
+  -webkit-touch-callout: none;
+}
