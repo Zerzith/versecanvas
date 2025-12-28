@@ -1,0 +1,26 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // ฟังก์ชันตรวจสอบการล็อกอิน
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    // ฟังก์ชันตรวจสอบขนาดไฟล์ (10MB)
+    function isValidSize() {
+      return request.resource.size < 10 * 1024 * 1024;
+    }
+    
+    // ฟังก์ชันตรวจสอบประเภทไฟล์รูปภาพ
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+    
+    // อนุญาตให้อ่านได้ทุกไฟล์
+    // อนุญาตให้เขียนได้เฉพาะผู้ที่ล็อกอินและไฟล์ไม่เกิน 10MB
+    match /{allPaths=**} {
+      allow read: if true;
+      allow write: if isSignedIn() && isValidSize();
+    }
+  }
+}

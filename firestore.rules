@@ -1,0 +1,346 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ============================================
+    // Helper Functions
+    // ============================================
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    function isAdminOrOwner(userId) {
+      return isOwner(userId) || isAdmin();
+    }
+    
+    // ============================================
+    // Users Collection
+    // ============================================
+    match /users/{userId} {
+      allow read: if true; // ทุกคนอ่านได้
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isAdminOrOwner(userId);
+      allow delete: if isAdmin();
+    }
+    
+    // ============================================
+    // Artworks Collection
+    // ============================================
+    match /artworks/{artworkId} {
+      allow read: if true; // ทุกคนอ่านได้
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (
+        resource.data.artistId == request.auth.uid ||
+        resource.data.userId == request.auth.uid ||
+        isAdmin()
+      );
+      allow delete: if isSignedIn() && (
+        resource.data.artistId == request.auth.uid ||
+        resource.data.userId == request.auth.uid ||
+        isAdmin()
+      );
+    }
+    
+    // ============================================
+    // Products Collection
+    // ============================================
+    match /products/{productId} {
+      allow read: if true; // ทุกคนอ่านได้
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        resource.data.sellerId == request.auth.uid ||
+        isAdmin()
+      );
+      allow delete: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        resource.data.sellerId == request.auth.uid ||
+        isAdmin()
+      );
+    }
+    
+    // ============================================
+    // Stories Collection
+    // ============================================
+    match /stories/{storyId} {
+      allow read: if true; // ทุกคนอ่านได้
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        resource.data.authorId == request.auth.uid ||
+        isAdmin()
+      );
+      allow delete: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        resource.data.authorId == request.auth.uid ||
+        isAdmin()
+      );
+      
+      // Chapters Subcollection
+      match /chapters/{chapterId} {
+        allow read: if true; // ทุกคนอ่านได้
+        allow write: if isSignedIn(); // ผู้ที่ล็อกอินเขียนได้
+      }
+    }
+    
+    // ============================================
+    // Jobs Collection (Commission)
+    // ============================================
+    match /jobs/{jobId} {
+      allow read: if true; // ทุกคนอ่านได้
+      allow create: if isSignedIn();
+      allow update: if isSignedIn(); // อนุญาตให้ทุกคนที่ล็อกอินอัปเดตได้ (สำหรับการสมัครงาน, อัปเดตสถานะ)
+      allow delete: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        isAdmin()
+      );
+    }
+    
+    // ============================================
+    // Work Submissions
+    // ============================================
+    match /workSubmissions/{submissionId} {
+      allow read: if isSignedIn() && (
+        resource.data.artistId == request.auth.uid ||
+        resource.data.clientId == request.auth.uid ||
+        isAdmin()
+      );
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (
+        resource.data.artistId == request.auth.uid ||
+        resource.data.clientId == request.auth.uid ||
+        isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+    
+    // ============================================
+    // Orders Collection
+    // ============================================
+    match /orders/{orderId} {
+      allow read: if isSignedIn() && (
+        resource.data.buyerId == request.auth.uid ||
+        resource.data.sellerId == request.auth.uid ||
+        isAdmin()
+      );
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (
+        resource.data.buyerId == request.auth.uid ||
+        resource.data.sellerId == request.auth.uid ||
+        isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+    
+    // ============================================
+    // Transactions Collection
+    // ============================================
+    match /transactions/{transactionId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        resource.data.fromUserId == request.auth.uid ||
+        resource.data.toUserId == request.auth.uid ||
+        isAdmin()
+      );
+      allow create: if isSignedIn();
+      allow update: if isAdmin(); // เฉพาะ admin
+      allow delete: if false; // ไม่อนุญาตให้ลบ
+    }
+    
+    // ============================================
+    // Payments Collection
+    // ============================================
+    match /payments/{paymentId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        isAdmin()
+      );
+      allow create: if isSignedIn();
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+    
+    // ============================================
+    // Withdrawals Collection
+    // ============================================
+    match /withdrawals/{withdrawalId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        isAdmin()
+      );
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+    
+    // ============================================
+    // Notifications Collection
+    // ============================================
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        isAdmin()
+      );
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        isAdmin()
+      );
+      allow delete: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        isAdmin()
+      );
+    }
+    
+    // ============================================
+    // Bookmarks Collection
+    // ============================================
+    match /bookmarks/{bookmarkId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+    
+    // ============================================
+    // Follows Collection
+    // ============================================
+    match /follows/{followId} {
+      allow read: if true; // ทุกคนอ่านได้
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn() && resource.data.followerId == request.auth.uid;
+    }
+    
+    // ============================================
+    // Settings Collection
+    // ============================================
+    match /settings/{userId} {
+      allow read: if isSignedIn() && userId == request.auth.uid;
+      allow write: if isSignedIn() && userId == request.auth.uid;
+    }
+    
+    // ============================================
+    // Likes Collection
+    // ============================================
+    match /likes/{likeId} {
+      allow read: if true; // ทุกคนอ่านได้
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+    
+    // ============================================
+    // Comments Collection
+    // ============================================
+    match /comments/{commentId} {
+      allow read: if true; // ทุกคนอ่านได้
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        isAdmin()
+      );
+      allow delete: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        isAdmin()
+      );
+    }
+    
+    // ============================================
+    // Reports Collection
+    // ============================================
+    match /reports/{reportId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    // ============================================
+    // Reviews Collection
+    // ============================================
+    match /reviews/{reviewId} {
+      allow read: if true; // ทุกคนอ่านได้
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        isAdmin()
+      );
+      allow delete: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        isAdmin()
+      );
+    }
+    
+    // ============================================
+    // Art Requests Collection
+    // ============================================
+    match /artRequests/{requestId} {
+      allow read: if true; // ทุกคนอ่านได้
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        isAdmin()
+      );
+    }
+    
+    // ============================================
+    // Escrow Collection (สำหรับระบบฝากเงิน)
+    // ============================================
+    match /escrow/{escrowId} {
+      allow read: if isSignedIn() && (
+        resource.data.clientId == request.auth.uid ||
+        resource.data.freelancerId == request.auth.uid ||
+        isAdmin()
+      );
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (
+        resource.data.clientId == request.auth.uid ||
+        resource.data.freelancerId == request.auth.uid ||
+        isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+    
+    // ============================================
+    // Messages Collection (สำหรับระบบข้อความ)
+    // ============================================
+    match /messages/{messageId} {
+      allow read: if isSignedIn() && (
+        resource.data.senderId == request.auth.uid ||
+        resource.data.receiverId == request.auth.uid ||
+        isAdmin()
+      );
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (
+        resource.data.senderId == request.auth.uid ||
+        resource.data.receiverId == request.auth.uid
+      );
+      allow delete: if isSignedIn() && resource.data.senderId == request.auth.uid;
+    }
+    
+    // ============================================
+    // Conversations Collection
+    // ============================================
+    match /conversations/{conversationId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isAdmin();
+    }
+  }
+}

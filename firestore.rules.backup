@@ -1,0 +1,122 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Users Collection
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
+    }
+    
+    // Stories Collection
+    match /stories/{storyId} {
+      allow read: if true; // อ่านได้ทุกคน
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && resource.data.authorId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.authorId == request.auth.uid;
+    }
+    
+    // Chapters Collection
+    match /chapters/{chapterId} {
+      allow read: if true; // อ่านได้ทุกคน
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && resource.data.authorId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.authorId == request.auth.uid;
+    }
+    
+    // Artworks Collection
+    match /artworks/{artworkId} {
+      allow read: if true; // อ่านได้ทุกคน
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+    
+    // Products Collection (Shop)
+    match /products/{productId} {
+      allow read: if true; // อ่านได้ทุกคน
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && resource.data.sellerId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.sellerId == request.auth.uid;
+    }
+    
+    // Jobs Collection (Artseek)
+    match /jobs/{jobId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && 
+        (resource.data.clientId == request.auth.uid || 
+         resource.data.freelancerId == request.auth.uid);
+      allow delete: if isAuthenticated() && resource.data.clientId == request.auth.uid;
+    }
+    
+    // Orders Collection
+    match /orders/{orderId} {
+      allow read: if isAuthenticated() && 
+        (resource.data.buyerId == request.auth.uid || 
+         resource.data.sellerId == request.auth.uid);
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && 
+        (resource.data.buyerId == request.auth.uid || 
+         resource.data.sellerId == request.auth.uid);
+      allow delete: if false; // ห้ามลบคำสั่งซื้อ
+    }
+    
+    // Transactions Collection
+    match /transactions/{transactionId} {
+      allow read: if isAuthenticated() && 
+        (resource.data.fromUserId == request.auth.uid || 
+         resource.data.toUserId == request.auth.uid);
+      allow create: if isAuthenticated();
+      allow update: if false; // ห้ามแก้ไขธุรกรรม
+      allow delete: if false; // ห้ามลบธุรกรรม
+    }
+    
+    // Notifications Collection
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+    
+    // Messages Collection (Realtime Database จะใช้ rules แยก)
+    // แต่ถ้ามี Firestore messages ให้เพิ่ม rules ตรงนี้
+    
+    // Comments Collection
+    match /comments/{commentId} {
+      allow read: if true; // อ่านได้ทุกคน
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+    
+    // Bookmarks Collection
+    match /bookmarks/{bookmarkId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+    
+    // Withdrawal Requests Collection
+    match /withdrawalRequests/{requestId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow delete: if false; // ห้ามลบคำขอถอนเงิน
+    }
+  }
+}

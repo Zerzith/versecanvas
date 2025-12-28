@@ -1,0 +1,38 @@
+{
+  "rules": {
+    "messages": {
+      "$conversationId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+    "conversations": {
+      "$userId": {
+        ".read": "auth != null && auth.uid == $userId",
+        ".write": "auth != null && auth.uid == $userId"
+      }
+    },
+    "views": {
+      "$contentType": {
+        "$contentId": {
+          ".read": true,
+          ".write": "auth != null"
+        }
+      }
+    },
+    "likes": {
+      "$contentType": {
+        "$contentId": {
+          ".read": true,
+          ".write": "auth != null"
+        }
+      }
+    },
+    "follows": {
+      "$userId": {
+        ".read": true,
+        ".write": "auth != null"
+      }
+    }
+  }
+}

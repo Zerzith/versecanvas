@@ -1,0 +1,195 @@
+{
+  "rules": {
+    // ============================================
+    // Messages (Real-time Chat)
+    // ============================================
+    "messages": {
+      "$conversationId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+    
+    // ============================================
+    // Conversations Metadata
+    // ============================================
+    "conversations": {
+      "$userId": {
+        ".read": "auth != null && auth.uid == $userId",
+        ".write": "auth != null && auth.uid == $userId"
+      }
+    },
+    
+    // ============================================
+    // Views (การดู)
+    // ============================================
+    "views": {
+      "$contentType": {
+        "$contentId": {
+          ".read": true,
+          ".write": "auth != null"
+        }
+      }
+    },
+    
+    // ============================================
+    // View Counts (จำนวนการดู)
+    // ============================================
+    "viewCounts": {
+      "$contentType": {
+        "$contentId": {
+          ".read": true,
+          ".write": "auth != null"
+        }
+      }
+    },
+    
+    // ============================================
+    // Likes (การถูกใจ)
+    // ============================================
+    "likes": {
+      "$contentType": {
+        "$contentId": {
+          "$userId": {
+            ".read": true,
+            ".write": "auth != null && auth.uid == $userId"
+          }
+        }
+      }
+    },
+    
+    // ============================================
+    // Like Counts (จำนวนไลค์)
+    // ============================================
+    "likeCounts": {
+      "$contentType": {
+        "$contentId": {
+          ".read": true,
+          ".write": "auth != null"
+        }
+      }
+    },
+    
+    // ============================================
+    // Comments (ความคิดเห็น)
+    // ============================================
+    "comments": {
+      "$contentType": {
+        "$contentId": {
+          ".read": true,
+          ".write": "auth != null",
+          "$commentId": {
+            ".read": true,
+            ".write": "auth != null"
+          }
+        }
+      }
+    },
+    
+    // ============================================
+    // Bookmarks (บุ๊คมาร์ค)
+    // ============================================
+    "bookmarks": {
+      "$userId": {
+        "$contentType": {
+          "$contentId": {
+            ".read": "auth != null && auth.uid == $userId",
+            ".write": "auth != null && auth.uid == $userId"
+          }
+        }
+      }
+    },
+    
+    // ============================================
+    // Follows (การติดตาม)
+    // ============================================
+    "follows": {
+      "$userId": {
+        ".read": true,
+        ".write": "auth != null"
+      }
+    },
+    
+    // ============================================
+    // Follower Counts (จำนวนผู้ติดตาม)
+    // ============================================
+    "followerCounts": {
+      "$userId": {
+        ".read": true,
+        ".write": "auth != null"
+      }
+    },
+    
+    // ============================================
+    // Following Counts (จำนวนที่ติดตาม)
+    // ============================================
+    "followingCounts": {
+      "$userId": {
+        ".read": true,
+        ".write": "auth != null"
+      }
+    },
+    
+    // ============================================
+    // Online Status (สถานะออนไลน์)
+    // ============================================
+    "status": {
+      "$userId": {
+        ".read": true,
+        ".write": "auth != null && auth.uid == $userId"
+      }
+    },
+    
+    // ============================================
+    // Presence (การติดตามสถานะ)
+    // ============================================
+    "presence": {
+      "$userId": {
+        ".read": true,
+        ".write": "auth != null && auth.uid == $userId"
+      }
+    },
+    
+    // ============================================
+    // Typing Indicators (สถานะกำลังพิมพ์)
+    // ============================================
+    "typing": {
+      "$conversationId": {
+        "$userId": {
+          ".read": "auth != null",
+          ".write": "auth != null && auth.uid == $userId"
+        }
+      }
+    },
+    
+    // ============================================
+    // Notifications (Real-time Notifications)
+    // ============================================
+    "notifications": {
+      "$userId": {
+        "$notificationId": {
+          ".read": "auth != null && auth.uid == $userId",
+          ".write": "auth != null"
+        }
+      }
+    },
+    
+    // ============================================
+    // Live Updates (สำหรับอัปเดตแบบ real-time)
+    // ============================================
+    "liveUpdates": {
+      "jobs": {
+        "$jobId": {
+          ".read": true,
+          ".write": "auth != null"
+        }
+      },
+      "orders": {
+        "$orderId": {
+          ".read": "auth != null",
+          ".write": "auth != null"
+        }
+      }
+    }
+  }
+}
