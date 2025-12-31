@@ -3,11 +3,13 @@ import { Link } from 'react-router-dom';
 import { collection, query, orderBy, getDocs, limit, where } from 'firebase/firestore';
 import { db, realtimeDb } from '../lib/firebase';
 import { ref, get } from 'firebase/database';
-import { Palette, Search, Plus, Eye, Heart, MessageCircle, TrendingUp, RefreshCw } from 'lucide-react';
+import { Palette, Search, Plus, Eye, Heart, MessageCircle, TrendingUp, RefreshCw, Calendar, Clock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocial } from '../contexts/SocialContext';
 import SocialActions from '../components/SocialActions';
 import CommentSection from '../components/CommentSection';
+import { format } from 'date-fns';
+import { th } from 'date-fns/locale';
 
 const Artworks = ({ currentLanguage }) => {
   const [artworks, setArtworks] = useState([]);
@@ -117,6 +119,15 @@ const Artworks = ({ currentLanguage }) => {
       return (num / 1000).toFixed(1) + 'K';
     }
     return num.toString();
+  };
+
+  const formatDate = (date) => {
+    if (!date) return 'ไม่ระบุวันที่';
+    try {
+      return format(date, 'd MMMM yyyy', { locale: th });
+    } catch (e) {
+      return 'ไม่ระบุวันที่';
+    }
   };
 
   const ArtworkCard = ({ item }) => {
@@ -283,7 +294,7 @@ const Artworks = ({ currentLanguage }) => {
               <div
                 key={item.id}
                 onClick={() => handleArtworkClick(item)}
-                className="aspect-square rounded-xl overflow-hidden bg-[#1a1a1a] hover:scale-105 transition-transform cursor-pointer relative group"
+                className="group relative aspect-square rounded-xl overflow-hidden bg-[#1a1a1a] cursor-pointer"
               >
                 <img
                   src={item.type === 'product' ? item.image : item.imageUrl}
@@ -400,16 +411,22 @@ const Artworks = ({ currentLanguage }) => {
 
                   <p className="text-gray-400 mb-4">{selectedArtwork.description}</p>
 
-                  {/* Stats */}
-                  <div className="flex items-center gap-4 mb-4 text-sm text-gray-400">
-                    <span className="flex items-center gap-1">
-                      <Heart size={16} className="text-pink-400" />
-                      {formatNumber(selectedArtwork.likes || 0)} ถูกใจ
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Eye size={16} className="text-blue-400" />
-                      {formatNumber(selectedArtwork.views || 0)} เข้าชม
-                    </span>
+                  {/* Stats & Date */}
+                  <div className="flex flex-col gap-2 mb-4 text-sm text-gray-400">
+                    <div className="flex items-center gap-4">
+                      <span className="flex items-center gap-1">
+                        <Heart size={16} className="text-pink-400" />
+                        {formatNumber(selectedArtwork.likes || 0)} ถูกใจ
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Eye size={16} className="text-blue-400" />
+                        {formatNumber(selectedArtwork.views || 0)} เข้าชม
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <Calendar size={14} />
+                      <span>อัปโหลดเมื่อ: {formatDate(selectedArtwork.createdAt)}</span>
+                    </div>
                   </div>
 
                   {/* Social Actions */}

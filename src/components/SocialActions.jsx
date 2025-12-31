@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Heart, MessageCircle, Share2, Bookmark } from 'lucide-react';
 import { useSocial } from '../contexts/SocialContext';
 import { useAuth } from '../contexts/AuthContext';
+import { toast } from 'react-hot-toast';
 
 export default function SocialActions({ postId, postType = 'artwork', onCommentClick }) {
   const { currentUser } = useAuth();
@@ -13,56 +14,79 @@ export default function SocialActions({ postId, postType = 'artwork', onCommentC
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
 
   useEffect(() => {
-    loadSocialData();
+    if (postId) {
+      loadSocialData();
+    }
   }, [postId, currentUser]);
 
   const loadSocialData = async () => {
-    const [isLikedResult, count, isBookmarkedResult] = await Promise.all([
-      isLiked(postId, postType),
-      getLikeCount(postId, postType),
-      isBookmarked(postId, postType)
-    ]);
-    setLiked(isLikedResult);
-    setLikeCount(count);
-    setBookmarked(isBookmarkedResult);
+    try {
+      const [isLikedResult, count, isBookmarkedResult] = await Promise.all([
+        isLiked(postId, postType),
+        getLikeCount(postId, postType),
+        isBookmarked(postId, postType)
+      ]);
+      setLiked(isLikedResult);
+      setLikeCount(count);
+      setBookmarked(isBookmarkedResult);
+    } catch (error) {
+      console.error("Error loading social data:", error);
+    }
   };
 
   const handleLike = async () => {
     if (!currentUser) {
-      alert('กรุณาเข้าสู่ระบบเพื่อกดไลค์');
+      toast.error('กรุณาเข้าสู่ระบบเพื่อถูกใจ');
       return;
     }
 
     setLoading(true);
-    const result = await likePost(postId, postType);
-    setLiked(result);
-    setLikeCount(prev => result ? prev + 1 : prev - 1);
-    setLoading(false);
+    try {
+      const result = await likePost(postId, postType);
+      setLiked(result);
+      setLikeCount(prev => result ? prev + 1 : Math.max(0, prev - 1));
+      if (result) {
+        toast.success('ถูกใจแล้ว');
+      }
+    } catch (error) {
+      toast.error('เกิดข้อผิดพลาด');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleShare = () => {
+    const url = window.location.href;
     if (navigator.share) {
       navigator.share({
         title: 'VerseCanvas',
         text: 'ดูผลงานนี้บน VerseCanvas',
-        url: window.location.href
+        url: url
+      }).catch(() => {
+        navigator.clipboard.writeText(url);
+        toast.success('คัดลอกลิงก์แล้ว!');
       });
     } else {
-      navigator.clipboard.writeText(window.location.href);
-      alert('คัดลอกลิงก์แล้ว!');
+      navigator.clipboard.writeText(url);
+      toast.success('คัดลอกลิงก์แล้ว!');
     }
   };
 
   const handleBookmark = async () => {
     if (!currentUser) {
-      alert('กรุณาเข้าสู่ระบบเพื่อบันทึก');
+      toast.error('กรุณาเข้าสู่ระบบเพื่อบันทึก');
       return;
     }
 
     setBookmarkLoading(true);
-    const result = await bookmarkPost(postId, postType);
-    setBookmarked(result);
-    setBookmarkLoading(false);
+    try {
+      const result = await bookmarkPost(postId, postType);
+      setBookmarked(result);
+    } catch (error) {
+      toast.error('เกิดข้อผิดพลาด');
+    } finally {
+      setBookmarkLoading(false);
+    }
   };
 
   return (
@@ -71,32 +95,32 @@ export default function SocialActions({ postId, postType = 'artwork', onCommentC
       <button
         onClick={handleLike}
         disabled={loading}
-        className={`flex items-center gap-2 px-4 py-2 rounded-full transition ${
+        className={`flex items-center gap-2 px-5 py-2.5 rounded-full transition-all duration-300 ${
           liked
-            ? 'bg-pink-500/20 text-pink-500'
-            : 'bg-[#2a2a2a] text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
+            ? 'bg-pink-500/20 text-pink-500 shadow-lg shadow-pink-500/10'
+            : 'bg-[#1a1a1a] text-gray-400 hover:bg-[#2a2a2a] hover:text-white border border-[#2a2a2a]'
         }`}
       >
         <Heart
           size={20}
-          className={liked ? 'fill-pink-500' : ''}
+          className={liked ? 'fill-pink-500 animate-pulse' : ''}
         />
-        <span className="font-medium">{likeCount}</span>
+        <span className="font-bold">{likeCount}</span>
       </button>
 
       {/* Comment Button */}
       <button
         onClick={onCommentClick}
-        className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#2a2a2a] text-gray-300 hover:bg-[#3a3a3a] hover:text-white transition"
+        className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1a1a1a] text-gray-400 hover:bg-[#2a2a2a] hover:text-white border border-[#2a2a2a] transition-all duration-300"
       >
         <MessageCircle size={20} />
-        <span className="font-medium">แสดงความคิดเห็น</span>
+        <span className="font-bold">แสดงความคิดเห็น</span>
       </button>
 
       {/* Share Button */}
       <button
         onClick={handleShare}
-        className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#2a2a2a] text-gray-300 hover:bg-[#3a3a3a] hover:text-white transition"
+        className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1a1a1a] text-gray-400 hover:bg-[#2a2a2a] hover:text-white border border-[#2a2a2a] transition-all duration-300"
       >
         <Share2 size={20} />
       </button>
@@ -105,10 +129,10 @@ export default function SocialActions({ postId, postType = 'artwork', onCommentC
       <button
         onClick={handleBookmark}
         disabled={bookmarkLoading}
-        className={`flex items-center gap-2 px-4 py-2 rounded-full transition ${
+        className={`flex items-center gap-2 px-5 py-2.5 rounded-full transition-all duration-300 ${
           bookmarked
-            ? 'bg-yellow-500/20 text-yellow-500'
-            : 'bg-[#2a2a2a] text-gray-300 hover:bg-[#3a3a3a] hover:text-white'
+            ? 'bg-yellow-500/20 text-yellow-500 shadow-lg shadow-yellow-500/10'
+            : 'bg-[#1a1a1a] text-gray-400 hover:bg-[#2a2a2a] hover:text-white border border-[#2a2a2a]'
         }`}
       >
         <Bookmark

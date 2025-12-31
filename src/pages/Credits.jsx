@@ -1,23 +1,55 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCredit } from '../contexts/CreditContext';
-import { Coins, Wallet, TrendingUp, MessageCircle, Mail, Phone, Plus, CreditCard, ArrowLeft, ArrowDownToLine } from 'lucide-react';
+import { 
+  Coins, Wallet, TrendingUp, MessageCircle, Mail, Phone, 
+  Plus, CreditCard, ArrowLeft, ArrowDownToLine, Zap, Star, 
+  Crown, Gem, History, Shield, CheckCircle2 
+} from 'lucide-react';
 import { creditPackages, formatPrice } from '../lib/stripe';
 import { createPaymentIntent, handleSuccessfulPayment, waitForWebhookProcessing } from '../lib/stripeApi';
 import StripePayment, { PaymentSuccess, PaymentError } from '../components/StripePayment';
 import { Button } from '../components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { Link } from 'react-router-dom';
+import { db } from '../lib/firebase';
+import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 
 export default function Credits() {
   const { currentUser } = useAuth();
-  const { credits, addCredits } = useCredit();
+  const { credits } = useCredit();
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [clientSecret, setClientSecret] = useState('');
   const [showPayment, setShowPayment] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState(null); // 'success', 'error', null
   const [paymentError, setPaymentError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('buy'); // buy, history
+  const [history, setHistory] = useState([]);
+
+  useEffect(() => {
+    if (currentUser && activeTab === 'history') {
+      fetchTransactionHistory();
+    }
+  }, [currentUser, activeTab]);
+
+  const fetchTransactionHistory = async () => {
+    try {
+      const q = query(
+        collection(db, 'payments'),
+        where('userId', '==', currentUser.uid),
+        orderBy('createdAt', 'desc')
+      );
+      const querySnapshot = await getDocs(q);
+      const historyData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setHistory(historyData);
+    } catch (error) {
+      console.error("Error fetching history:", error);
+    }
+  };
 
   const handleSelectPackage = async (pkg) => {
     if (!currentUser) {
@@ -29,7 +61,6 @@ export default function Credits() {
     setIsLoading(true);
 
     try {
-      // Create payment intent
       const paymentData = await createPaymentIntent(
         pkg.price,
         'thb',
@@ -53,22 +84,9 @@ export default function Credits() {
 
   const handlePaymentSuccess = async (paymentIntent) => {
     try {
-      // Record payment
       await handleSuccessfulPayment(currentUser.uid, paymentIntent, selectedPackage);
-      
-      // Wait for webhook to process payment and add credits
-      console.log('Waiting for webhook to process payment...');
-      const processed = await waitForWebhookProcessing(paymentIntent.id);
-      
-      if (processed) {
-        console.log('Payment processed by webhook');
-        setPaymentStatus('success');
-      } else {
-        console.log('Webhook processing timeout, but payment succeeded');
-        // Payment succeeded but webhook might be delayed
-        // Credits will be added when webhook processes
-        setPaymentStatus('success');
-      }
+      await waitForWebhookProcessing(paymentIntent.id);
+      setPaymentStatus('success');
     } catch (error) {
       console.error('Error handling payment success:', error);
       setPaymentStatus('error');
@@ -98,180 +116,171 @@ export default function Credits() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0f0f0f] text-white pt-20">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-yellow-500 via-orange-500 to-pink-500 bg-clip-text text-transparent">
-            เติมเครดิต
-          </h1>
-          <p className="text-gray-400 text-lg">ซื้อเครดิตเพื่อใช้งานบนแพลตฟอร์ม</p>
+    <div className="min-h-screen bg-[#0f0f0f] text-white pt-24 pb-12">
+      <div className="max-w-6xl mx-auto px-4">
+        
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
+          <div>
+            <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+              เติมเครดิต VerseCanvas
+            </h1>
+            <p className="text-gray-400">ใช้เครดิตเพื่อจ้างงานศิลปิน ซื้อผลงาน หรือสนับสนุนนักเขียนที่คุณชื่นชอบ</p>
+          </div>
+          
+          <div className="bg-[#1a1a1a] p-6 rounded-3xl border border-purple-500/30 flex items-center gap-4 shadow-lg shadow-purple-500/10">
+            <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center">
+              <Wallet size={24} />
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 uppercase tracking-wider">เครดิตปัจจุบันของคุณ</p>
+              <p className="text-3xl font-black text-purple-400">{credits.toLocaleString()} <span className="text-sm font-normal text-gray-500">เครดิต</span></p>
+            </div>
+          </div>
         </div>
 
-        {/* Current Balance */}
-        <div className="bg-gradient-to-r from-yellow-500 to-orange-500 rounded-2xl p-8 mb-12 text-center relative">
-          <Link 
-            to="/withdraw"
-            className="absolute top-4 right-4 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors"
+        {/* Tabs */}
+        <div className="flex gap-4 mb-8">
+          <button 
+            onClick={() => setActiveTab('buy')}
+            className={`px-6 py-2 rounded-full text-sm font-bold transition ${activeTab === 'buy' ? 'bg-purple-600 text-white' : 'bg-[#1a1a1a] text-gray-400 hover:bg-[#2a2a2a]'}`}
           >
-            <ArrowDownToLine size={18} />
-            ถอนเงิน
-          </Link>
-          <div className="flex items-center justify-center gap-3 mb-2">
-            <Wallet className="w-8 h-8 text-white" />
-            <h2 className="text-2xl font-bold text-white">ยอดเครดิตปัจจุบัน</h2>
-          </div>
-          <div className="text-6xl font-bold text-white mb-2">
-            {credits.toLocaleString()}
-          </div>
-          <p className="text-white/80">เครดิต</p>
+            เลือกแพ็คเกจ
+          </button>
+          <button 
+            onClick={() => setActiveTab('history')}
+            className={`px-6 py-2 rounded-full text-sm font-bold transition ${activeTab === 'history' ? 'bg-purple-600 text-white' : 'bg-[#1a1a1a] text-gray-400 hover:bg-[#2a2a2a]'}`}
+          >
+            ประวัติการเติมเงิน
+          </button>
         </div>
 
-        {/* Payment Method Notice */}
-        <div className="bg-blue-500/10 border-2 border-blue-500/50 rounded-2xl p-6 mb-12">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-              <CreditCard className="w-6 h-6 text-blue-400" />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-blue-400 mb-2">ชำระเงินด้วย Stripe</h3>
-              <p className="text-gray-300 mb-4">
-                รองรับการชำระเงินด้วยบัตรเครดิต/เดบิต ผ่านระบบ Stripe ที่ปลอดภัยและเชื่อถือได้
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <span className="px-3 py-1 bg-white/10 rounded-full text-xs">Visa</span>
-                <span className="px-3 py-1 bg-white/10 rounded-full text-xs">Mastercard</span>
-                <span className="px-3 py-1 bg-white/10 rounded-full text-xs">JCB</span>
-                <span className="px-3 py-1 bg-white/10 rounded-full text-xs">American Express</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Alternative Payment */}
-        <div className="bg-gray-500/10 border border-gray-500/30 rounded-2xl p-6 mb-12">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gray-500/20 flex items-center justify-center flex-shrink-0">
-              <MessageCircle className="w-6 h-6 text-gray-400" />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-gray-300 mb-2">ช่องทางอื่นๆ</h3>
-              <p className="text-gray-400 mb-4">
-                หากต้องการชำระเงินผ่านช่องทางอื่น กรุณาติดต่อแอดมิน
-              </p>
-              <div className="flex flex-col gap-2 text-sm text-gray-400">
-                <div className="flex items-center gap-2">
-                  <Mail className="w-4 h-4" />
-                  <span>Email: admin@versecanvas.com</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Phone className="w-4 h-4" />
-                  <span>Line: @versecanvas</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Packages */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-            <Coins className="w-6 h-6 text-yellow-500" />
-            แพ็คเกจเครดิต
-          </h2>
+        {activeTab === 'buy' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {creditPackages.map((pkg) => (
-              <div
+              <div 
                 key={pkg.id}
-                className={`relative bg-[#1a1a1a] rounded-2xl p-6 border-2 transition-all hover:scale-105 cursor-pointer ${
-                  pkg.popular
-                    ? 'border-yellow-500 shadow-lg shadow-yellow-500/20'
-                    : 'border-[#2a2a2a] hover:border-yellow-500/50'
-                }`}
+                className={`relative flex flex-col bg-[#1a1a1a] rounded-3xl border-2 ${pkg.popular ? 'border-purple-500 shadow-lg shadow-purple-500/20' : 'border-[#2a2a2a]'} overflow-hidden transition-all duration-300 hover:scale-105`}
                 onClick={() => handleSelectPackage(pkg)}
               >
                 {pkg.popular && (
-                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                    <span className="bg-gradient-to-r from-yellow-500 to-orange-500 px-4 py-1 rounded-full text-xs font-bold text-white">
-                      แนะนำ
-                    </span>
+                  <div className="absolute top-0 right-0 bg-purple-600 text-white text-[10px] font-black px-3 py-1 rounded-bl-xl uppercase tracking-tighter">
+                    ยอดนิยม
                   </div>
                 )}
+                
+                <div className="p-8 bg-gradient-to-br from-purple-900/20 to-pink-900/20">
+                  <div className="w-12 h-12 bg-black/20 rounded-2xl flex items-center justify-center mb-4">
+                    <Coins className="text-purple-400" size={24} />
+                  </div>
+                  <h3 className="text-xl font-bold mb-1">{pkg.name}</h3>
+                  <p className="text-xs text-gray-400 line-clamp-2 h-8">{pkg.description}</p>
+                </div>
 
-                <div className="text-center">
-                  <div className="flex items-center justify-center mb-4">
-                    <Coins className="w-12 h-12 text-yellow-500" />
+                <div className="p-8 flex-1 flex flex-col">
+                  <div className="mb-6">
+                    <span className="text-4xl font-black">{pkg.credits.toLocaleString()}</span>
+                    <span className="text-gray-400 ml-2">เครดิต</span>
                   </div>
 
-                  <div className="text-4xl font-bold text-yellow-500 mb-2">
-                    {pkg.credits.toLocaleString()}
-                  </div>
-                  <p className="text-gray-400 text-sm mb-4">เครดิต</p>
-
-                  {pkg.description && (
-                    <div className="bg-green-500/20 border border-green-500/50 rounded-lg px-3 py-2 mb-4">
-                      <span className="text-sm font-bold text-green-400">{pkg.description}</span>
+                  <div className="space-y-3 mb-8">
+                    <div className="flex items-center gap-2 text-sm text-gray-300">
+                      <CheckCircle2 size={16} className="text-green-500" />
+                      <span>เติมเข้าบัญชีทันที</span>
                     </div>
-                  )}
-
-                  <div className="text-3xl font-bold text-white mb-4">
-                    {formatPrice(pkg.price)}
+                    <div className="flex items-center gap-2 text-sm text-gray-300">
+                      <CheckCircle2 size={16} className="text-green-500" />
+                      <span>ไม่มีวันหมดอายุ</span>
+                    </div>
                   </div>
 
-                  <Button
-                    className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600"
+                  <Button 
+                    className={`w-full py-6 rounded-2xl font-bold transition ${pkg.popular ? 'bg-purple-600 hover:bg-purple-700' : 'bg-[#2a2a2a] hover:bg-[#3a3a3a]'}`}
                     disabled={isLoading}
                   >
-                    <CreditCard className="w-4 h-4 mr-2" />
-                    ซื้อเลย
+                    {isLoading && selectedPackage?.id === pkg.id ? (
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      formatPrice(pkg.price)
+                    )}
                   </Button>
                 </div>
               </div>
             ))}
           </div>
-        </div>
+        ) : (
+          <div className="bg-[#1a1a1a] rounded-3xl border border-[#2a2a2a] overflow-hidden">
+            {history.length > 0 ? (
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-[#2a2a2a] bg-[#252525]">
+                    <th className="px-6 py-4 text-sm font-bold text-gray-400">วันที่</th>
+                    <th className="px-6 py-4 text-sm font-bold text-gray-400">รายการ</th>
+                    <th className="px-6 py-4 text-sm font-bold text-gray-400">จำนวนเครดิต</th>
+                    <th className="px-6 py-4 text-sm font-bold text-gray-400">ราคา</th>
+                    <th className="px-6 py-4 text-sm font-bold text-gray-400">สถานะ</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#2a2a2a]">
+                  {history.map((item) => (
+                    <tr key={item.id} className="hover:bg-[#2a2a2a]/50 transition">
+                      <td className="px-6 py-4 text-sm">
+                        {new Date(item.createdAt?.seconds * 1000).toLocaleDateString('th-TH')}
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="text-sm font-bold">{item.packageName || 'เติมเครดิต'}</p>
+                      </td>
+                      <td className="px-6 py-4 text-sm font-bold text-green-400">
+                        +{item.credits?.toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 text-sm">
+                        ฿{item.amount ? (item.amount / 100).toLocaleString() : '0'}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="px-3 py-1 bg-green-500/10 text-green-500 rounded-full text-[10px] font-bold uppercase">
+                          สำเร็จ
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div className="py-20 text-center text-gray-500">
+                <History size={48} className="mx-auto mb-4 opacity-20" />
+                <p>ยังไม่มีประวัติการเติมเงิน</p>
+              </div>
+            )}
+          </div>
+        )}
 
-        {/* Benefits */}
-        <div className="bg-[#1a1a1a] rounded-2xl p-8 border border-[#2a2a2a]">
-          <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-            <TrendingUp className="w-6 h-6 text-yellow-500" />
-            ประโยชน์ของเครดิต
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
-                <Coins className="w-6 h-6 text-yellow-500" />
-              </div>
-              <div>
-                <h3 className="font-bold mb-2">ซื้อสินค้าและบริการ</h3>
-                <p className="text-gray-400 text-sm">
-                  ใช้เครดิตซื้อสินค้าดิจิทัลและบริการต่างๆ ในแพลตฟอร์ม
-                </p>
-              </div>
+        {/* Security Info */}
+        <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="flex items-start gap-4">
+            <div className="p-3 bg-blue-500/10 rounded-2xl text-blue-500">
+              <Shield size={24} />
             </div>
-
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center flex-shrink-0">
-                <MessageCircle className="w-6 h-6 text-purple-500" />
-              </div>
-              <div>
-                <h3 className="font-bold mb-2">จ้างงาน Commission</h3>
-                <p className="text-gray-400 text-sm">
-                  ใช้เครดิตจ้างศิลปินสร้างงานตามที่คุณต้องการ
-                </p>
-              </div>
+            <div>
+              <h4 className="font-bold mb-1">ปลอดภัย 100%</h4>
+              <p className="text-xs text-gray-400">ชำระเงินผ่านระบบ Stripe มาตรฐานระดับโลก</p>
             </div>
-
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-pink-500/20 flex items-center justify-center flex-shrink-0">
-                <TrendingUp className="w-6 h-6 text-pink-500" />
-              </div>
-              <div>
-                <h3 className="font-bold mb-2">โปรโมทผลงาน</h3>
-                <p className="text-gray-400 text-sm">
-                  ใช้เครดิตโปรโมทผลงานของคุณให้คนเห็นมากขึ้น
-                </p>
-              </div>
+          </div>
+          <div className="flex items-start gap-4">
+            <div className="p-3 bg-green-500/10 rounded-2xl text-green-500">
+              <Zap size={24} />
+            </div>
+            <div>
+              <h4 className="font-bold mb-1">รวดเร็วทันใจ</h4>
+              <p className="text-xs text-gray-400">เครดิตจะถูกเติมเข้าบัญชีทันทีหลังจากชำระเงินสำเร็จ</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-4">
+            <div className="p-3 bg-purple-500/10 rounded-2xl text-purple-500">
+              <CheckCircle2 size={24} />
+            </div>
+            <div>
+              <h4 className="font-bold mb-1">สนับสนุนศิลปิน</h4>
+              <p className="text-xs text-gray-400">ทุกการเติมเงินช่วยขับเคลื่อนชุมชนศิลปิน</p>
             </div>
           </div>
         </div>
@@ -279,7 +288,7 @@ export default function Credits() {
 
       {/* Payment Dialog */}
       <Dialog open={showPayment} onOpenChange={handleClosePayment}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md bg-[#1a1a1a] border-[#2a2a2a] text-white">
           {paymentStatus === 'success' ? (
             <PaymentSuccess
               amount={selectedPackage?.price}
@@ -295,11 +304,12 @@ export default function Credits() {
           ) : (
             <>
               <DialogHeader>
+                <DialogTitle className="text-center mb-4">ชำระเงินผ่าน Stripe</DialogTitle>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={handleClosePayment}
-                  className="absolute left-4 top-4"
+                  className="absolute left-4 top-4 text-gray-400 hover:text-white"
                 >
                   <ArrowLeft className="w-4 h-4" />
                 </Button>

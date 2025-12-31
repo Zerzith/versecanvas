@@ -1,66 +1,59 @@
 import { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { 
+  Grid, List, Settings, MapPin, Link as LinkIcon, 
+  Calendar, Edit, MessageCircle, UserPlus, UserCheck,
+  Heart, MessageSquare, CreditCard, Award, Image as ImageIcon,
+  BookOpen, Star, Camera, Eye, Save, X
+} from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocial } from '../contexts/SocialContext';
-import { uploadImage } from '../lib/cloudinary';
-import { doc, updateDoc, getDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { 
-  User, Settings, Heart, Users, MessageCircle, Edit, Camera, 
-  BookOpen, Palette, Briefcase, Eye, Save, Send
-} from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
+import { doc, getDoc, collection, query, where, getDocs, orderBy, updateDoc } from 'firebase/firestore';
+import { uploadImage } from '../lib/cloudinary';
 import FollowButton from '../components/FollowButton';
 
 export default function Profile() {
   const { userId } = useParams();
   const { currentUser } = useAuth();
   const { getFollowerCount, getFollowingCount } = useSocial();
-  const [activeTab, setActiveTab] = useState('งานศิลปะ');
-  const [userProfile, setUserProfile] = useState(null);
-  const [followers, setFollowers] = useState(0);
-  const [following, setFollowing] = useState(0);
+  const [profile, setProfile] = useState(null);
+  const [artworks, setArtworks] = useState([]);
+  const [stories, setStories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('artworks'); // artworks, stories, about
   const [isEditing, setIsEditing] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [userWorks, setUserWorks] = useState({
-    artworks: [],
-    stories: [],
-    commissions: [],
-    shopProducts: [],
-    collections: []
-  });
-  const [workStats, setWorkStats] = useState({
-    totalViews: 0,
-    totalLikes: 0,
-    totalWorks: 0
-  });
   const [editForm, setEditForm] = useState({
     displayName: '',
     bio: '',
     location: '',
     website: ''
   });
+  const [stats, setStats] = useState({
+    followers: 0,
+    following: 0,
+    artworks: 0,
+    stories: 0
+  });
 
-  const tabs = ['งานศิลปะ', 'นิยาย', 'คอมมิชชั่น', 'คอลเลคชั่น'];
-
-  // ใช้ userId จาก URL ถ้ามี ไม่มีใช้ currentUser.uid
-  const profileUserId = userId || currentUser?.uid;
-  const isOwnProfile = currentUser && profileUserId === currentUser.uid;
+  const isOwnProfile = currentUser?.uid === (userId || currentUser?.uid);
+  const targetUserId = userId || currentUser?.uid;
 
   useEffect(() => {
-    if (profileUserId) {
-      loadUserProfile();
-      loadStats();
-      loadUserWorks();
+    if (targetUserId) {
+      fetchProfileData();
     }
-  }, [profileUserId]);
+  }, [targetUserId]);
 
-  const loadUserProfile = async () => {
+  const fetchProfileData = async () => {
+    setLoading(true);
     try {
-      const userDoc = await getDoc(doc(db, 'users', profileUserId));
+      // Fetch user profile
+      const userDoc = await getDoc(doc(db, 'users', targetUserId));
       if (userDoc.exists()) {
         const data = userDoc.data();
-        setUserProfile(data);
-        // ตั้งค่า editForm เฉพาะเมื่อเป็นโปรไฟล์ตัวเอง
+        setProfile(data);
         if (isOwnProfile) {
           setEditForm({
             displayName: data.displayName || '',
@@ -69,229 +62,53 @@ export default function Profile() {
             website: data.website || ''
           });
         }
-      } else if (isOwnProfile) {
-        // Create default profile เฉพาะเมื่อเป็นโปรไฟล์ตัวเอง
-        const defaultProfile = {
-          displayName: currentUser.displayName || currentUser.email.split('@')[0],
-          email: currentUser.email,
-          photoURL: currentUser.photoURL || '',
-          bio: '',
-          location: '',
-          website: '',
-          createdAt: new Date()
-        };
-        setUserProfile(defaultProfile);
-        setEditForm({
-          displayName: defaultProfile.displayName,
-          bio: '',
-          location: '',
-          website: ''
-        });
-      } else {
-        // ถ้าไม่พบโปรไฟล์คนอื่น
-        setUserProfile(null);
-      }
-    } catch (error) {
-      console.error('Error loading profile:', error);
-    }
-  };
-
-  const loadStats = async () => {
-    try {
-      const followerCount = await getFollowerCount(profileUserId);
-      const followingCount = await getFollowingCount(profileUserId);
-      setFollowers(followerCount);
-      setFollowing(followingCount);
-    } catch (error) {
-      console.error('Error loading stats:', error);
-    }
-  };
-
-  const loadUserWorks = async () => {
-    try {
-      let storiesData = [];
-      let artworksData = [];
-      let commissionsData = [];
-      let shopProductsData = [];
-
-      // Load stories (ลองทั้ง authorId และ userId)
-      try {
-        const storiesQuery = query(
-          collection(db, 'stories'),
-          where('authorId', '==', profileUserId)
-        );
-        const storiesSnapshot = await getDocs(storiesQuery);
-        storiesData = storiesSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          type: 'story'
-        }));
-      } catch (err) {
-        console.log('Stories query error:', err);
-        // ลองโหลดทั้งหมดแล้วกรองเอง
-        const allStories = await getDocs(collection(db, 'stories'));
-        storiesData = allStories.docs
-          .filter(doc => doc.data().authorId === profileUserId)
-          .map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-            type: 'story'
-          }));
       }
 
-      // Load artworks
-      try {
-        const artworksQuery = query(
-          collection(db, 'artworks'),
-          where('artistId', '==', profileUserId)
-        );
-        const artworksSnapshot = await getDocs(artworksQuery);
-        artworksData = artworksSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          type: 'artwork'
-        }));
-      } catch (err) {
-        console.log('Artworks query error:', err);
-        const allArtworks = await getDocs(collection(db, 'artworks'));
-        artworksData = allArtworks.docs
-          .filter(doc => doc.data().artistId === profileUserId || doc.data().userId === profileUserId)
-          .map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-            type: 'artwork'
-          }));
-      }
+      // Fetch artworks
+      const artworksQuery = query(
+        collection(db, 'artworks'),
+        where('artistId', '==', targetUserId)
+      );
+      const artworksSnap = await getDocs(artworksQuery);
+      const artworksData = artworksSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setArtworks(artworksData.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)));
 
-      // Load art requests/commissions
-      try {
-        const commissionsQuery = query(
-          collection(db, 'artRequests'),
-          where('clientId', '==', profileUserId)
-        );
-        const commissionsSnapshot = await getDocs(commissionsQuery);
-        commissionsData = commissionsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          type: 'commission'
-        }));
-      } catch (err) {
-        console.log('Commissions query error:', err);
-        const allCommissions = await getDocs(collection(db, 'artRequests'));
-        commissionsData = allCommissions.docs
-          .filter(doc => doc.data().clientId === profileUserId)
-          .map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-            type: 'commission'
-          }));
-      }
+      // Fetch stories
+      const storiesQuery = query(
+        collection(db, 'stories'),
+        where('authorId', '==', targetUserId)
+      );
+      const storiesSnap = await getDocs(storiesQuery);
+      const storiesData = storiesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setStories(storiesData.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)));
 
-      // Load shop products
-      try {
-        const productsQuery = query(
-          collection(db, 'products'),
-          where('sellerId', '==', profileUserId)
-        );
-        const productsSnapshot = await getDocs(productsQuery);
-        shopProductsData = productsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          type: 'product'
-        }));
-      } catch (err) {
-        console.log('Products query error:', err);
-        const allProducts = await getDocs(collection(db, 'products'));
-        shopProductsData = allProducts.docs
-          .filter(doc => doc.data().sellerId === profileUserId)
-          .map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-            type: 'product'
-          }));
-      }
-
-      // เรียงตามวันที่สร้าง
-      storiesData.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-      artworksData.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-      commissionsData.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-      shopProductsData.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-
-      setUserWorks({
-        artworks: artworksData,
-        stories: storiesData,
-        commissions: commissionsData,
-        shopProducts: shopProductsData,
-        collections: []
-      });
-
-      // Calculate stats
-      const totalViews = [...storiesData, ...artworksData].reduce((sum, item) => sum + (item.views || 0), 0);
-      const totalLikes = [...storiesData, ...artworksData].reduce((sum, item) => sum + (item.likes || 0), 0);
-      const totalWorks = storiesData.length + artworksData.length + shopProductsData.length;
-
-      setWorkStats({
-        totalViews,
-        totalLikes,
-        totalWorks
-      });
-
-      console.log('Loaded works:', {
-        stories: storiesData.length,
+      // Set stats
+      const followerCount = await getFollowerCount(targetUserId);
+      const followingCount = await getFollowingCount(targetUserId);
+      setStats({
+        followers: followerCount,
+        following: followingCount,
         artworks: artworksData.length,
-        commissions: commissionsData.length,
-        products: shopProductsData.length
+        stories: storiesData.length
       });
+
     } catch (error) {
-      console.error('Error loading user works:', error);
+      console.error("Error fetching profile:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleProfileImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     setUploading(true);
     try {
-      const result = await uploadImage(file, {
-        folder: 'versecanvas/profiles',
-        tags: ['profile']
-      });
-
-      await updateDoc(doc(db, 'users', currentUser.uid), {
-        photoURL: result.url
-      });
-
-      setUserProfile({ ...userProfile, photoURL: result.url });
-      alert('อัปโหลดรูปโปรไฟล์สำเร็จ!');
+      const result = await uploadImage(file, { folder: 'versecanvas/profiles' });
+      await updateDoc(doc(db, 'users', currentUser.uid), { photoURL: result.url });
+      setProfile({ ...profile, photoURL: result.url });
     } catch (error) {
       console.error('Error uploading image:', error);
-      alert('เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ');
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleCoverImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    setUploading(true);
-    try {
-      const result = await uploadImage(file, {
-        folder: 'versecanvas/covers',
-        tags: ['cover']
-      });
-
-      await updateDoc(doc(db, 'users', currentUser.uid), {
-        coverURL: result.url
-      });
-
-      setUserProfile({ ...userProfile, coverURL: result.url });
-      alert('อัปโหลดรูปปกสำเร็จ!');
-    } catch (error) {
-      console.error('Error uploading cover:', error);
-      alert('เกิดข้อผิดพลาดในการอัปโหลดรูปปก');
     } finally {
       setUploading(false);
     }
@@ -299,97 +116,53 @@ export default function Profile() {
 
   const handleSaveProfile = async () => {
     try {
-      await updateDoc(doc(db, 'users', currentUser.uid), {
-        displayName: editForm.displayName,
-        bio: editForm.bio,
-        location: editForm.location,
-        website: editForm.website
-      });
-
-      setUserProfile({ ...userProfile, ...editForm });
+      await updateDoc(doc(db, 'users', currentUser.uid), editForm);
+      setProfile({ ...profile, ...editForm });
       setIsEditing(false);
-      alert('บันทึกข้อมูลสำเร็จ!');
     } catch (error) {
       console.error('Error saving profile:', error);
-      alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
     }
   };
 
-  // Data will be loaded from Firebase
-
-  if (!currentUser) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-[#0f0f0f] flex items-center justify-center">
-        <div className="text-center">
-          <User className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-          <p className="text-gray-400 mb-4">กรุณาเข้าสู่ระบบ</p>
-          <Link
-            to="/login"
-            className="px-6 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 font-medium transition inline-block"
-          >
-            เข้าสู่ระบบ
-          </Link>
-        </div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-[#0f0f0f] flex items-center justify-center text-white">
+        <p>ไม่พบข้อมูลผู้ใช้</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0f0f0f] text-white pt-16">
-      {/* Cover Image - ลดความสูงลง */}
-      <div className="relative h-48 bg-gradient-to-r from-pink-900 via-purple-900 to-teal-900">
-        {userProfile?.coverURL && (
-          <img
-            src={userProfile.coverURL}
-            alt="Cover"
-            className="w-full h-full object-cover"
-          />
-        )}
-        <div className="absolute inset-0 bg-black/30"></div>
-        {isOwnProfile && (
-          <label className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 p-2 rounded-full transition cursor-pointer">
-            <Camera className="w-4 h-4" />
-            <input
-              type="file"
-              className="hidden"
-              accept="image/*"
-              onChange={handleCoverImageUpload}
-              disabled={uploading}
-            />
-          </label>
-        )}
-      </div>
-
-      {/* Profile Header - กระชับขึ้น */}
-      <div className="max-w-6xl mx-auto px-4 -mt-12 relative z-10">
-        <div className="flex flex-col md:flex-row gap-4 items-start md:items-end mb-6">
-          {/* Profile Image - ลดขนาด */}
+    <div className="min-h-screen bg-[#0f0f0f] text-white pt-20 pb-10">
+      <div className="max-w-4xl mx-auto px-4">
+        
+        {/* Profile Header - Instagram Style */}
+        <div className="flex flex-col md:flex-row items-center md:items-start gap-8 mb-12">
+          {/* Avatar */}
           <div className="relative">
-            <div className="w-28 h-28 rounded-full border-4 border-[#0f0f0f] bg-gradient-to-br from-pink-500 via-purple-500 to-teal-500 p-1">
-              <div className="w-full h-full rounded-full bg-[#1a1a1a] flex items-center justify-center overflow-hidden">
-                {userProfile?.photoURL ? (
-                  <img
-                    src={userProfile.photoURL}
-                    alt="Profile"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <User className="w-16 h-16 text-gray-400" />
+            <div className="w-32 h-32 md:w-40 md:h-40 rounded-full p-1 bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600">
+              <div className="w-full h-full rounded-full border-4 border-[#0f0f0f] overflow-hidden relative group">
+                <img 
+                  src={profile.photoURL || `https://ui-avatars.com/api/?name=${profile.displayName}&background=random`} 
+                  className="w-full h-full object-cover"
+                  alt={profile.displayName}
+                />
+                {isOwnProfile && (
+                  <label className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center cursor-pointer">
+                    <Camera className="text-white" size={24} />
+                    <input type="file" className="hidden" accept="image/*" onChange={handleProfileImageUpload} disabled={uploading} />
+                  </label>
                 )}
               </div>
             </div>
-            {isOwnProfile && (
-              <label className="absolute bottom-0 right-0 bg-gradient-to-r from-pink-500 to-purple-600 p-2 rounded-full cursor-pointer hover:scale-110 transition">
-                <Camera className="w-5 h-5" />
-                <input
-                  type="file"
-                  className="hidden"
-                  accept="image/*"
-                  onChange={handleProfileImageUpload}
-                  disabled={uploading}
-                />
-              </label>
-            )}
             {uploading && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
                 <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -397,282 +170,252 @@ export default function Profile() {
             )}
           </div>
 
-          {/* Profile Info - กระชับขึ้น */}
-          <div className="flex-1">
-            {!isEditing ? (
-              <>
-                <h1 className="text-2xl font-bold mb-1">
-                  {userProfile?.displayName || (isOwnProfile ? currentUser?.email.split('@')[0] : 'ไม่ระบุชื่อ')}
-                </h1>
-                <p className="text-gray-400 text-sm mb-3 line-clamp-2">
-                  {userProfile?.bio || 'ยังไม่มีประวัติ'}
-                </p>
-                <div className="flex flex-wrap gap-3 text-xs">
-                  {userProfile?.location && (
-                    <span className="text-gray-500">📍 {userProfile.location}</span>
-                  )}
-                  {userProfile?.website && (
-                    <a
-                      href={userProfile.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-purple-400 hover:text-purple-300"
+          {/* Info */}
+          <div className="flex-1 text-center md:text-left">
+            <div className="flex flex-col md:flex-row md:items-center gap-4 mb-6">
+              <h1 className="text-2xl font-bold">{profile.displayName}</h1>
+              <div className="flex items-center justify-center md:justify-start gap-2">
+                {isOwnProfile ? (
+                  <>
+                    <button 
+                      onClick={() => setIsEditing(!isEditing)}
+                      className="px-4 py-1.5 bg-[#2a2a2a] hover:bg-[#3a3a3a] rounded-lg text-sm font-medium transition"
                     >
-                      🔗 {userProfile.website}
+                      {isEditing ? 'ยกเลิก' : 'แก้ไขโปรไฟล์'}
+                    </button>
+                    <Link to="/settings" className="p-1.5 bg-[#2a2a2a] hover:bg-[#3a3a3a] rounded-lg transition">
+                      <Settings size={20} />
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <FollowButton userId={targetUserId} />
+                    <Link 
+                      to={`/messages?userId=${targetUserId}&userName=${profile.displayName}`}
+                      className="px-4 py-1.5 bg-[#2a2a2a] hover:bg-[#3a3a3a] rounded-lg text-sm font-medium transition flex items-center gap-2"
+                    >
+                      <MessageCircle size={18} />
+                      ส่งข้อความ
+                    </Link>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Stats */}
+            <div className="flex justify-center md:justify-start gap-8 mb-6">
+              <div className="text-center md:text-left">
+                <span className="font-bold block md:inline mr-1">{stats.artworks + stats.stories}</span>
+                <span className="text-gray-400 text-sm">โพสต์</span>
+              </div>
+              <div className="text-center md:text-left">
+                <span className="font-bold block md:inline mr-1">{stats.followers}</span>
+                <span className="text-gray-400 text-sm">ผู้ติดตาม</span>
+              </div>
+              <div className="text-center md:text-left">
+                <span className="font-bold block md:inline mr-1">{stats.following}</span>
+                <span className="text-gray-400 text-sm">กำลังติดตาม</span>
+              </div>
+            </div>
+
+            {/* Bio & Links */}
+            {!isEditing ? (
+              <div className="space-y-2">
+                <p className="font-medium">{profile.role === 'artist' ? '🎨 ศิลปิน' : '👤 ผู้ใช้งาน'}</p>
+                <p className="text-sm text-gray-300 whitespace-pre-wrap">{profile.bio || 'ยังไม่มีคำอธิบายตัวเอง'}</p>
+                <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm text-gray-400">
+                  {profile.location && (
+                    <span className="flex items-center gap-1"><MapPin size={14} /> {profile.location}</span>
+                  )}
+                  {profile.website && (
+                    <a href={profile.website} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-blue-400 hover:underline">
+                      <LinkIcon size={14} /> {profile.website.replace(/^https?:\/\//, '')}
                     </a>
                   )}
+                  <span className="flex items-center gap-1"><Calendar size={14} /> เข้าร่วมเมื่อ {new Date(profile.createdAt?.seconds * 1000).toLocaleDateString('th-TH', { month: 'long', year: 'numeric' })}</span>
                 </div>
-              </>
+              </div>
             ) : (
-              <div className="space-y-4 bg-[#1a1a1a] p-6 rounded-2xl border border-[#2a2a2a]">
+              <div className="space-y-4 bg-[#1a1a1a] p-6 rounded-2xl border border-[#2a2a2a] text-left">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1 uppercase">ชื่อที่แสดง</label>
+                    <input 
+                      type="text" 
+                      value={editForm.displayName} 
+                      onChange={(e) => setEditForm({...editForm, displayName: e.target.value})}
+                      className="w-full bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1 uppercase">ที่อยู่</label>
+                    <input 
+                      type="text" 
+                      value={editForm.location} 
+                      onChange={(e) => setEditForm({...editForm, location: e.target.value})}
+                      className="w-full bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500"
+                    />
+                  </div>
+                </div>
                 <div>
-                  <label className="block text-sm text-gray-400 mb-2">ชื่อที่แสดง</label>
-                  <input
-                    type="text"
-                    value={editForm.displayName}
-                    onChange={(e) => setEditForm({ ...editForm, displayName: e.target.value })}
-                    className="w-full bg-[#2a2a2a] border border-[#3a3a3a] rounded-xl px-4 py-2 focus:outline-none focus:border-purple-500"
+                  <label className="block text-xs text-gray-500 mb-1 uppercase">เว็บไซต์</label>
+                  <input 
+                    type="text" 
+                    value={editForm.website} 
+                    onChange={(e) => setEditForm({...editForm, website: e.target.value})}
+                    className="w-full bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-400 mb-2">ประวัติ</label>
-                  <textarea
-                    value={editForm.bio}
-                    onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
-                    className="w-full bg-[#2a2a2a] border border-[#3a3a3a] rounded-xl px-4 py-2 focus:outline-none focus:border-purple-500 resize-none"
+                  <label className="block text-xs text-gray-500 mb-1 uppercase">ประวัติส่วนตัว</label>
+                  <textarea 
+                    value={editForm.bio} 
+                    onChange={(e) => setEditForm({...editForm, bio: e.target.value})}
                     rows="3"
+                    className="w-full bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-500 resize-none"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-2">ที่อยู่</label>
-                  <input
-                    type="text"
-                    value={editForm.location}
-                    onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
-                    className="w-full bg-[#2a2a2a] border border-[#3a3a3a] rounded-xl px-4 py-2 focus:outline-none focus:border-purple-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-2">เว็บไซต์</label>
-                  <input
-                    type="url"
-                    value={editForm.website}
-                    onChange={(e) => setEditForm({ ...editForm, website: e.target.value })}
-                    className="w-full bg-[#2a2a2a] border border-[#3a3a3a] rounded-xl px-4 py-2 focus:outline-none focus:border-purple-500"
-                  />
-                </div>
-                <div className="flex gap-3">
-                  <button
-                    onClick={handleSaveProfile}
-                    className="flex-1 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 transition flex items-center justify-center gap-2"
-                  >
-                    <Save size={18} />
-                    บันทึก
-                  </button>
-                  <button
-                    onClick={() => setIsEditing(false)}
-                    className="flex-1 py-2 rounded-xl bg-[#2a2a2a] hover:bg-[#3a3a3a] transition"
-                  >
-                    ยกเลิก
+                <div className="flex justify-end gap-2">
+                  <button onClick={() => setIsEditing(false)} className="px-4 py-2 text-sm text-gray-400 hover:text-white transition">ยกเลิก</button>
+                  <button onClick={handleSaveProfile} className="px-6 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-sm font-bold transition flex items-center gap-2">
+                    <Save size={16} /> บันทึกข้อมูล
                   </button>
                 </div>
               </div>
             )}
-            
-            {/* Stats - กระชับขึ้น */}
-            <div className="flex gap-4 mt-3">
-              <div>
-                <span className="text-lg font-bold text-purple-400">{followers}</span>
-                <span className="text-xs text-gray-400 ml-1">ผู้ติดตาม</span>
-              </div>
-              <div>
-                <span className="text-lg font-bold text-purple-400">{following}</span>
-                <span className="text-xs text-gray-400 ml-1">กำลังติดตาม</span>
-              </div>
-              <div>
-                <span className="text-lg font-bold text-purple-400">{workStats.totalWorks}</span>
-                <span className="text-xs text-gray-400 ml-1">ผลงาน</span>
-              </div>
-            </div>
-          </div>
 
-          {/* Action Buttons - กระชับขึ้น */}
-          <div className="flex gap-2">
-            {isOwnProfile ? (
-              <>
-                {!isEditing && (
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="px-4 py-2 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] hover:border-purple-500 transition flex items-center gap-2 text-sm"
-                  >
-                    <Edit size={16} />
-                    แก้ไข
-                  </button>
-                )}
-                <Link
-                  to="/settings"
-                  className="px-4 py-2 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] hover:border-purple-500 transition flex items-center gap-2 text-sm"
-                >
-                  <Settings size={16} />
-                  ตั้งค่า
+            {/* Credits Display */}
+            {isOwnProfile && (
+              <div className="mt-6 p-4 bg-gradient-to-r from-purple-900/30 to-pink-900/30 rounded-2xl border border-purple-500/30 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center">
+                    <CreditCard size={20} className="text-white" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400">เครดิตคงเหลือ</p>
+                    <p className="text-xl font-bold text-purple-400">{profile.credits || 0} เครดิต</p>
+                  </div>
+                </div>
+                <Link to="/credits" className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-xl text-sm font-bold transition">
+                  เติมเงิน
                 </Link>
-              </>
-            ) : (
-              <>
-                {/* ปุ่มติดตาม */}
-                <FollowButton 
-                  targetUserId={profileUserId} 
-                  className="text-sm"
-                />
-                {/* ปุ่มส่งข้อความสำหรับโปรไฟล์คนอื่น */}
-                <Link
-                  to={`/messages?userId=${profileUserId}`}
-                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 transition flex items-center gap-2 text-sm font-medium"
-                >
-                  <Send size={16} />
-                  ส่งข้อความ
-                </Link>
-              </>
+              </div>
             )}
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-4 border-b border-[#2a2a2a] mb-8 overflow-x-auto">
-          {tabs.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-6 py-3 font-medium whitespace-nowrap transition border-b-2 ${
-                activeTab === tab
-                  ? 'border-purple-500 text-purple-400'
-                  : 'border-transparent text-gray-400 hover:text-white'
-              }`}
+        <div className="border-t border-[#2a2a2a] mb-8">
+          <div className="flex justify-center gap-12">
+            <button 
+              onClick={() => setActiveTab('artworks')}
+              className={`flex items-center gap-2 py-4 border-t-2 transition ${activeTab === 'artworks' ? 'border-white text-white' : 'border-transparent text-gray-500'}`}
             >
-              {tab}
+              <Grid size={18} />
+              <span className="text-xs font-bold uppercase tracking-widest">ผลงานศิลปะ</span>
             </button>
-          ))}
+            <button 
+              onClick={() => setActiveTab('stories')}
+              className={`flex items-center gap-2 py-4 border-t-2 transition ${activeTab === 'stories' ? 'border-white text-white' : 'border-transparent text-gray-500'}`}
+            >
+              <BookOpen size={18} />
+              <span className="text-xs font-bold uppercase tracking-widest">นิยาย</span>
+            </button>
+            <button 
+              onClick={() => setActiveTab('about')}
+              className={`flex items-center gap-2 py-4 border-t-2 transition ${activeTab === 'about' ? 'border-white text-white' : 'border-transparent text-gray-500'}`}
+            >
+              <Award size={18} />
+              <span className="text-xs font-bold uppercase tracking-widest">เกี่ยวกับ</span>
+            </button>
+          </div>
         </div>
 
-        {/* Content */}
-        <div className="pb-12">
-          {activeTab === 'งานศิลปะ' && (
-            userWorks.artworks.length === 0 ? (
-              <div className="text-center py-12">
-                <Palette className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                <p className="text-gray-400">ยังไม่มีงานศิลปะ</p>
-                {isOwnProfile && (
-                  <Link
-                    to="/upload-artwork"
-                    className="inline-block mt-4 px-6 py-2 rounded-lg bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 font-medium transition"
-                  >
-                    อัปโหลดงานแรก
-                  </Link>
-                )}
-              </div>
+        {/* Content Grid */}
+        <div className="grid grid-cols-3 gap-1 md:gap-4">
+          {activeTab === 'artworks' && (
+            artworks.length > 0 ? (
+              artworks.map((art) => (
+                <Link 
+                  key={art.id} 
+                  to={`/artwork/${art.id}`}
+                  className="relative aspect-square group overflow-hidden bg-[#1a1a1a]"
+                >
+                  <img src={art.imageUrl} className="w-full h-full object-cover transition duration-500 group-hover:scale-110" alt="" />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-6">
+                    <div className="flex items-center gap-1 font-bold"><Heart size={20} fill="white" /> {art.likes || 0}</div>
+                    <div className="flex items-center gap-1 font-bold"><MessageSquare size={20} fill="white" /> {art.comments || 0}</div>
+                  </div>
+                </Link>
+              ))
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {userWorks.artworks.map((artwork) => (
-                  <Link
-                    key={artwork.id}
-                    to={`/artwork/${artwork.id}`}
-                    className="group relative aspect-square rounded-xl overflow-hidden bg-[#1a1a1a] border border-[#2a2a2a] hover:border-purple-500 transition"
-                  >
-                    <img
-                      src={artwork.imageUrl || artwork.image}
-                      alt={artwork.title}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="absolute bottom-0 left-0 right-0 p-3">
-                        <h3 className="font-medium text-sm mb-1 line-clamp-1">{artwork.title}</h3>
-                        <div className="flex items-center gap-3 text-xs text-gray-300">
-                          <span className="flex items-center gap-1">
-                            <Eye size={12} />
-                            {artwork.views || 0}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Heart size={12} />
-                            {artwork.likes || 0}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
+              <div className="col-span-3 py-20 text-center text-gray-500">
+                <ImageIcon size={48} className="mx-auto mb-4 opacity-20" />
+                <p>ยังไม่มีผลงานศิลปะ</p>
               </div>
             )
           )}
 
-          {activeTab === 'นิยาย' && (
-            userWorks.stories.length === 0 ? (
-              <div className="text-center py-12">
-                <BookOpen className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                <p className="text-gray-400">ยังไม่มีนิยาย</p>
-                {isOwnProfile && (
-                  <Link
-                    to="/create-story"
-                    className="inline-block mt-4 px-6 py-2 rounded-lg bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 font-medium transition"
-                  >
-                    สร้างนิยาย
-                  </Link>
-                )}
-              </div>
+          {activeTab === 'stories' && (
+            stories.length > 0 ? (
+              stories.map((story) => (
+                <Link 
+                  key={story.id} 
+                  to={`/story/${story.id}`}
+                  className="relative aspect-[3/4] group overflow-hidden bg-[#1a1a1a] rounded-lg"
+                >
+                  <img src={story.coverImage} className="w-full h-full object-cover transition duration-500 group-hover:scale-110" alt="" />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex flex-col items-center justify-center p-4 text-center">
+                    <h4 className="font-bold mb-2 line-clamp-2">{story.title}</h4>
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-1 text-sm"><Star size={16} fill="white" /> {story.rating || 0}</div>
+                      <div className="flex items-center gap-1 text-sm"><BookOpen size={16} /> {story.chapters || 0}</div>
+                    </div>
+                  </div>
+                </Link>
+              ))
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {userWorks.stories.map((story) => (
-                  <Link
-                    key={story.id}
-                    to={`/story/${story.id}`}
-                    className="group bg-[#1a1a1a] rounded-2xl overflow-hidden border-2 border-transparent hover:border-purple-500 transition-all"
-                  >
-                    <div className="relative aspect-[3/4] overflow-hidden">
-                      <img
-                        src={story.coverImage}
-                        alt={story.title}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                      />
-                      <div className="absolute top-3 right-3">
-                        <span className="bg-purple-600 px-3 py-1 rounded-full text-xs font-medium">
-                          {story.status}
-                        </span>
-                      </div>
-                      <div className="absolute top-3 left-3">
-                        <span className="bg-black/70 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-medium">
-                          {story.chapters} ตอน
-                        </span>
-                      </div>
-                    </div>
-                    <div className="p-5">
-                      <h3 className="font-bold text-lg mb-2 group-hover:text-purple-400 transition line-clamp-2">
-                        {story.title}
-                      </h3>
-                      <div className="flex items-center justify-between text-sm text-gray-400">
-                        <div className="flex items-center gap-4">
-                          <span className="flex items-center gap-1">
-                            <Eye size={16} />
-                            {story.views || 0}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Heart size={16} />
-                            {story.likes || 0}
-                          </span>
-                        </div>
-                        <span className="text-xs bg-[#2a2a2a] px-3 py-1 rounded-full">
-                          {story.category}
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
+              <div className="col-span-3 py-20 text-center text-gray-500">
+                <BookOpen size={48} className="mx-auto mb-4 opacity-20" />
+                <p>ยังไม่มีนิยาย</p>
               </div>
             )
           )}
 
-          {(activeTab === 'คอมมิชชั่น' || activeTab === 'คอลเลคชั่น') && (
-            <div className="text-center py-12">
-              <Palette className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-              <p className="text-gray-400">ยังไม่มีเนื้อหาในส่วนนี้</p>
+          {activeTab === 'about' && (
+            <div className="col-span-3 bg-[#1a1a1a] rounded-2xl p-8 border border-[#2a2a2a]">
+              <h3 className="text-xl font-bold mb-6">เกี่ยวกับ {profile.displayName}</h3>
+              <div className="grid md:grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-gray-400 text-sm mb-1">บทบาท</p>
+                    <p className="font-medium">{profile.role === 'artist' ? 'ศิลปิน (Artist)' : 'ผู้จ้างงาน (Client)'}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-400 text-sm mb-1">ทักษะ / ความถนัด</p>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {profile.skills?.map((skill, i) => (
+                        <span key={i} className="px-3 py-1 bg-[#2a2a2a] rounded-full text-xs">{skill}</span>
+                      )) || <p className="text-sm text-gray-500">ไม่ได้ระบุ</p>}
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-gray-400 text-sm mb-1">สถิติการทำงาน</p>
+                    <div className="grid grid-cols-2 gap-4 mt-2">
+                      <div className="p-3 bg-[#2a2a2a] rounded-xl text-center">
+                        <p className="text-xl font-bold text-green-400">{profile.completedJobs || 0}</p>
+                        <p className="text-[10px] text-gray-400 uppercase">งานที่สำเร็จ</p>
+                      </div>
+                      <div className="p-3 bg-[#2a2a2a] rounded-xl text-center">
+                        <p className="text-xl font-bold text-yellow-400">{profile.rating || '5.0'}</p>
+                        <p className="text-[10px] text-gray-400 uppercase">คะแนนรีวิว</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
