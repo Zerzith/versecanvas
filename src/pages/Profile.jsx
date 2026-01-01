@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { 
   Grid, List, Settings, MapPin, Link as LinkIcon, 
   Calendar, Edit, MessageCircle, UserPlus, UserCheck,
@@ -14,6 +14,7 @@ import { uploadImage } from '../lib/cloudinary';
 import FollowButton from '../components/FollowButton';
 
 export default function Profile() {
+  const navigate = useNavigate();
   const { userId } = useParams();
   const { currentUser } = useAuth();
   const { getFollowerCount, getFollowingCount } = useSocial();
@@ -190,13 +191,13 @@ export default function Profile() {
                 ) : (
                   <>
                     <FollowButton userId={targetUserId} />
-                    <Link 
-                      to={`/messages?userId=${targetUserId}&userName=${profile.displayName}`}
+                    <button 
+                      onClick={() => navigate(`/messages?userId=${targetUserId}&userName=${profile.displayName}`)}
                       className="px-4 py-1.5 bg-[#2a2a2a] hover:bg-[#3a3a3a] rounded-lg text-sm font-medium transition flex items-center gap-2"
                     >
                       <MessageCircle size={18} />
                       ส่งข้อความ
-                    </Link>
+                    </button>
                   </>
                 )}
               </div>

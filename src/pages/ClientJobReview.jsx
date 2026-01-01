@@ -5,7 +5,7 @@ import { useEscrow } from '../contexts/EscrowContext';
 import { useCredit } from '../contexts/CreditContext';
 import { collection, query, where, getDocs, doc, updateDoc, addDoc, serverTimestamp, getDoc, increment } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { Check, X, Eye, Download, AlertCircle, RefreshCw, MessageCircle, ArrowLeft, Star, FileText, ShieldCheck, RefreshCcw } from 'lucide-react';
+import { Check, X, Eye, Download, AlertCircle, RefreshCw, MessageCircle, ArrowLeft, Star, FileText, ShieldCheck, RefreshCcw, CheckCircle2, Clock } from 'lucide-react';
 import { downloadImage, getFileExtension, generateFilename } from '../lib/download';
 import { Button } from '../components/ui/button';
 import { toast } from 'react-hot-toast';
@@ -282,7 +282,7 @@ export default function ClientJobReview() {
                 <p className="text-gray-400">รหัสงาน: {job.id}</p>
               </div>
               <div className="px-4 py-2 bg-purple-500/10 text-purple-400 rounded-full text-sm font-bold border border-purple-500/20">
-                {job.status === 'review' ? 'รอการยืนยัน' : job.status === 'completed' ? 'เสร็จสิ้น' : 'ขอแก้ไข'}
+                {job.status === 'review' || job.status === 'revision_requested' ? 'รอการยืนยัน' : job.status === 'completed' ? 'เสร็จสิ้น' : 'ยกเลิก'}
               </div>
             </div>
             {artist && (
@@ -300,7 +300,7 @@ export default function ClientJobReview() {
             {submission ? (
               <div>
                 <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                  <CheckCircle2 className="text-green-500" size={24} />
+                  <Check size={24} className="text-green-500" />
                   ผลงานที่ส่งมอบ
                 </h3>
                 <div className="bg-black/40 rounded-2xl p-6 border border-[#2a2a2a]">
@@ -326,7 +326,7 @@ export default function ClientJobReview() {
               </div>
             )}
 
-            {job.status === 'review' && (
+            {(job.status === 'review' || job.status === 'revision_requested') && submission && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
                 <Button onClick={handleApprove} disabled={processing} className="bg-green-600 hover:bg-green-700 text-white py-8 rounded-2xl text-lg font-bold flex items-center justify-center gap-3">
                   {processing ? <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <><ShieldCheck size={24} /> ยืนยันรับงาน</>}
