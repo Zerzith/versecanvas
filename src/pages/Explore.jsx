@@ -14,7 +14,7 @@ const Explore = () => {
   const [trendingStories, setTrendingStories] = useState([]);
   const [trendingArtworks, setTrendingArtworks] = useState([]);
 
-  const tabs = ['ทั้งหมด', 'นิยาย', 'งานศิลปะ', 'กำลังมาแรง'];
+  const tabs = ["ทั้งหมด", "นิยาย", "งานศิลปะ", "กำลังมาแรง"];
 
   useEffect(() => {
     fetchContent();
