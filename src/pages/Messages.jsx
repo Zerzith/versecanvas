@@ -35,23 +35,48 @@ export default function Messages() {
 
   // Auto-open chat when userId is passed via URL params
   useEffect(() => {
-    if (currentUser && conversations.length > 0) {
+    const initChat = async () => {
+      if (!currentUser) return;
+      
       const userIdParam = searchParams.get('userId');
       const userNameParam = searchParams.get('userName');
       
       if (userIdParam) {
-        // Check if conversation already exists
+        // 1. Check in already loaded conversations
         const existingConv = conversations.find(conv => conv.user.id === userIdParam);
-        
         if (existingConv) {
           setSelectedConversation(existingConv);
+          return;
+        }
+
+        // 2. If not in list, check Realtime DB directly
+        const convId = `${currentUser.uid}_${userIdParam}`;
+        const convRef = ref(realtimeDb, `conversations/${currentUser.uid}/${convId}`);
+        const snapshot = await get(convRef);
+
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          setSelectedConversation({
+            id: convId,
+            user: { 
+              id: userIdParam, 
+              name: data.userName || userNameParam || 'ผู้ใช้', 
+              avatar: data.userAvatar || null, 
+              online: data.online || false 
+            },
+            lastMessage: '',
+            timestamp: data.timestamp || Date.now(),
+            unread: 0
+          });
         } else if (userNameParam) {
-          // Start new conversation if it doesn't exist
+          // 3. Start new conversation if it doesn't exist anywhere
           startNewConversation(userIdParam, userNameParam);
         }
       }
-    }
-  }, [searchParams, conversations, currentUser]);
+    };
+
+    initChat();
+  }, [searchParams, currentUser, conversations.length > 0]);
 
   const loadConversations = async () => {
     if (!currentUser) return;
