@@ -28,7 +28,11 @@ module.exports = async (req, res) => {
   try {
     // ตรวจสอบ Stripe Secret Key
     if (!process.env.STRIPE_SECRET_KEY) {
-      throw new Error('STRIPE_SECRET_KEY is not set');
+      console.error('MISSING_STRIPE_SECRET_KEY: Please set it in Vercel Environment Variables');
+      return res.status(500).json({ 
+        error: 'STRIPE_SECRET_KEY is missing in server environment',
+        help: 'Please add STRIPE_SECRET_KEY to Vercel Settings > Environment Variables and Redeploy.'
+      });
     }
 
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -61,9 +65,11 @@ module.exports = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error creating payment intent:', error);
+    console.error('STRIPE_API_ERROR:', error);
     res.status(500).json({ 
-      error: error.message || 'Failed to create payment intent' 
+      error: error.message || 'Failed to create payment intent',
+      type: error.type || 'StripeError',
+      code: error.code || 'unknown'
     });
   }
 };
