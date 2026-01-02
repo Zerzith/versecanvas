@@ -29,11 +29,19 @@ const Login = ({ currentLanguage }) => {
       navigate('/');
     } catch (error) {
       console.error('Login error:', error);
-      setError(
-        isThaiLanguage 
-          ? 'เข้าสู่ระบบไม่สำเร็จ กรุณาตรวจสอบอีเมลและรหัสผ่าน'
-          : 'Failed to login. Please check your email and password.'
-      );
+      let errorMessage = isThaiLanguage 
+        ? 'เข้าสู่ระบบไม่สำเร็จ กรุณาตรวจสอบอีเมลและรหัสผ่าน'
+        : 'Failed to login. Please check your email and password.';
+      
+      if (error.code === 'auth/invalid-api-key') {
+        errorMessage = isThaiLanguage ? 'API Key ของ Firebase ไม่ถูกต้อง' : 'Invalid Firebase API Key';
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = isThaiLanguage ? 'ปัญหาการเชื่อมต่อเครือข่าย' : 'Network request failed';
+      } else if (error.code) {
+        errorMessage += ` (${error.code})`;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -47,11 +55,15 @@ const Login = ({ currentLanguage }) => {
       navigate('/');
     } catch (error) {
       console.error('Google sign-in error:', error);
-      setError(
-        isThaiLanguage 
-          ? 'เข้าสู่ระบบด้วย Google ไม่สำเร็จ'
-          : 'Failed to sign in with Google'
-      );
+      let errorMessage = isThaiLanguage 
+        ? 'เข้าสู่ระบบด้วย Google ไม่สำเร็จ'
+        : 'Failed to sign in with Google';
+      
+      if (error.code) {
+        errorMessage += ` (${error.code})`;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
