@@ -2,13 +2,17 @@ import { db } from './firebase';
 import { doc, setDoc, serverTimestamp, collection, addDoc, query, where, orderBy, getDocs } from 'firebase/firestore';
 
 // Get API base URL from environment variable
+// On Vercel, we can use relative paths if the frontend and backend are on the same domain
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 // Create Payment Intent
 export async function createPaymentIntent(amount, currency = 'thb', metadata = {}) {
   try {
+    // Use relative path if API_BASE_URL is not set
+    const url = API_BASE_URL ? `${API_BASE_URL}/api/create-payment-intent` : '/api/create-payment-intent';
+    
     // Call backend API to create payment intent
-    const response = await fetch(`${API_BASE_URL}/api/create-payment-intent`, {
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
