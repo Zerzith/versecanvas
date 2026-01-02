@@ -23,8 +23,8 @@ export const creditPackages = [
     id: 'starter',
     name: 'Starter',
     credits: 100,
-    price: 100,
-    priceInCents: 10000, // 100 THB in cents
+    price: 10,
+    priceInCents: 1000, // 10 THB in cents (TEST MODE)
     description: 'เหมาะสำหรับผู้เริ่มต้น',
     popular: false,
   },
@@ -32,27 +32,27 @@ export const creditPackages = [
     id: 'basic',
     name: 'Basic',
     credits: 500,
-    price: 450,
-    priceInCents: 45000, // 450 THB in cents
-    description: 'ประหยัด 10%',
-    popular: false,
+    price: 45,
+    priceInCents: 4500, // 45 THB in cents (TEST MODE)
+    description: 'ประหยัด 10% - แพ็คเกจยอดนิยม',
+    popular: true,
   },
   {
     id: 'pro',
     name: 'Pro',
     credits: 1000,
-    price: 850,
-    priceInCents: 85000, // 850 THB in cents
-    description: 'ประหยัด 15%',
-    popular: true,
+    price: 85,
+    priceInCents: 8500, // 85 THB in cents (TEST MODE)
+    description: 'ประหยัด 15% - คุ้มค่าที่สุด',
+    popular: false,
   },
   {
     id: 'premium',
     name: 'Premium',
     credits: 5000,
-    price: 4000,
-    priceInCents: 400000, // 4000 THB in cents
-    description: 'ประหยัด 20%',
+    price: 400,
+    priceInCents: 40000, // 400 THB in cents (TEST MODE)
+    description: 'ประหยัด 20% - สำหรับมืออาชีพ',
     popular: false,
   },
 ];
