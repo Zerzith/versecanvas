@@ -5,7 +5,7 @@ import {
   ref, push, set, onValue, query, orderByChild, get
 } from 'firebase/database';
 import { doc, getDoc } from 'firebase/firestore';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { 
   MessageCircle, Search, Send, MoreVertical, 
   Phone, Video, Info, Image, Smile, Paperclip, AlertCircle
@@ -13,6 +13,7 @@ import {
 
 export default function Messages() {
   const { currentUser } = useAuth();
+  const [searchParams] = useSearchParams();
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -31,6 +32,26 @@ export default function Messages() {
       subscribeToMessages(selectedConversation.id);
     }
   }, [selectedConversation, currentUser]);
+
+  // Auto-open chat when userId is passed via URL params
+  useEffect(() => {
+    if (currentUser && conversations.length > 0) {
+      const userIdParam = searchParams.get('userId');
+      const userNameParam = searchParams.get('userName');
+      
+      if (userIdParam) {
+        // Check if conversation already exists
+        const existingConv = conversations.find(conv => conv.user.id === userIdParam);
+        
+        if (existingConv) {
+          setSelectedConversation(existingConv);
+        } else if (userNameParam) {
+          // Start new conversation if it doesn't exist
+          startNewConversation(userIdParam, userNameParam);
+        }
+      }
+    }
+  }, [searchParams, conversations, currentUser]);
 
   const loadConversations = async () => {
     if (!currentUser) return;
@@ -161,22 +182,26 @@ export default function Messages() {
     const convId = `${currentUser.uid}_${userId}`;
     const convRef = ref(realtimeDb, `conversations/${currentUser.uid}/${convId}`);
     
-    await set(convRef, {
-      userId,
-      userName,
-      userAvatar: null,
-      online: false,
-      timestamp: Date.now(),
-      unread: 0
-    });
+    try {
+      await set(convRef, {
+        userId,
+        userName,
+        userAvatar: null,
+        online: false,
+        timestamp: Date.now(),
+        unread: 0
+      });
 
-    setSelectedConversation({
-      id: convId,
-      user: { id: userId, name: userName, avatar: null, online: false },
-      lastMessage: '',
-      timestamp: Date.now(),
-      unread: 0
-    });
+      setSelectedConversation({
+        id: convId,
+        user: { id: userId, name: userName, avatar: null, online: false },
+        lastMessage: '',
+        timestamp: Date.now(),
+        unread: 0
+      });
+    } catch (error) {
+      console.error('Error starting new conversation:', error);
+    }
   };
 
   const formatTime = (timestamp) => {
