@@ -93,7 +93,7 @@ export default function JobManagement() {
         return (
           <div className="flex gap-2">
             <Link
-              to={`/job/${job.id}/confirm`}
+              to={`/job/${job.id}/review`}
               className="px-4 py-2 bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 rounded-lg text-sm font-medium transition"
             >
               <ThumbsUp size={16} className="inline mr-1" />

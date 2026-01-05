@@ -441,6 +441,11 @@ const Artworks = ({ currentLanguage }) => {
                     <CommentSection
                       postId={selectedArtwork.id}
                       postType="artwork"
+                      isOpen={showComments}
+                      onClose={() => {
+                        setSelectedArtwork(null);
+                        setShowComments(false);
+                      }}
                     />
                   </div>
                 </div>
