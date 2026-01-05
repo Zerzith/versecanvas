@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useEscrow } from '../contexts/EscrowContext';
+
 import { useCredit } from '../contexts/CreditContext';
 import { collection, query, where, getDocs, doc, updateDoc, addDoc, serverTimestamp, getDoc, increment } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -14,8 +14,7 @@ export default function ClientJobReview() {
   const { jobId } = useParams();
   const navigate = useNavigate();
   const { currentUser } = useAuth();
-  const { releaseEscrow } = useEscrow();
-  const { refreshCredits } = useCredit();
+  const { transferCredits, refreshCredits } = useCredit();
   const [job, setJob] = useState(null);
   const [submission, setSubmission] = useState(null);
   const [artist, setArtist] = useState(null);
@@ -90,25 +89,34 @@ export default function ClientJobReview() {
 
     setProcessing(true);
     try {
-      const result = await releaseEscrow(jobId, currentUser.uid, job.acceptedFreelancerId);
-      if (!result.success) throw new Error(result.error);
+      // โอนเครดิตให้ศิลปินทันที (ไม่หักค่าธรรมเนียม)
+      const jobPrice = parseInt(job.budgetMin) || 0;
+      
+      await transferCredits(
+        job.acceptedFreelancerId,
+        jobPrice,
+        `รับเงินจากงาน "${job.title}"`
+      );
 
+      // อัปเดต workSubmission
       await updateDoc(doc(db, 'workSubmissions', submission.id), {
         status: 'approved',
         approvedAt: serverTimestamp()
       });
 
+      // อัปเดตสถานะงาน
       await updateDoc(doc(db, 'jobs', jobId), {
         status: 'completed',
         completedAt: serverTimestamp()
       });
 
+      // สร้าง order record
       await addDoc(collection(db, 'orders'), {
         jobId: jobId,
         productTitle: job.title,
         productImage: submission.watermarkedImageUrl,
         productFile: submission.originalImageUrl,
-        productPrice: parseInt(job.budgetMin) || 0,
+        productPrice: jobPrice,
         productCategory: 'Artseek',
         buyerId: currentUser.uid,
         buyerEmail: currentUser.email,
@@ -118,16 +126,18 @@ export default function ClientJobReview() {
         updatedAt: serverTimestamp()
       });
 
+      // อัปเดตสถิติศิลปิน
       await updateDoc(doc(db, 'users', job.acceptedFreelancerId), {
         completedJobs: increment(1),
-        totalEarnings: increment(parseInt(job.budgetMin) || 0)
+        totalEarnings: increment(jobPrice)
       });
 
+      // ส่งการแจ้งเตือนให้ศิลปิน
       await addDoc(collection(db, 'notifications'), {
         userId: job.acceptedFreelancerId,
         type: 'work_approved',
         title: 'งานได้รับการยืนยัน',
-        message: `ลูกค้ายืนยันงาน "${job.title}" แล้ว คุณได้รับเครดิต ${job.budgetMin} เครดิต`,
+        message: `ลูกค้ายืนยันงาน "${job.title}" แล้ว คุณได้รับเครดิต ${jobPrice} เครดิต`,
         link: '/transactions',
         read: false,
         createdAt: serverTimestamp()
@@ -136,6 +146,11 @@ export default function ClientJobReview() {
       await refreshCredits();
       setShowReviewModal(true);
       toast.success('ยืนยันรับงานสำเร็จ!');
+      
+      // ไปหน้าคำสั่งซื้อ
+      setTimeout(() => {
+        navigate('/orders');
+      }, 2000);
     } catch (error) {
       console.error('Error approving work:', error);
       toast.error('เกิดข้อผิดพลาด: ' + error.message);
