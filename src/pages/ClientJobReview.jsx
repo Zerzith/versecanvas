@@ -42,7 +42,8 @@ export default function ClientJobReview() {
       const jobDoc = await getDoc(doc(db, 'jobs', jobId));
       if (jobDoc.exists()) {
         const jobData = { id: jobDoc.id, ...jobDoc.data() };
-        if (jobData.clientId !== currentUser.uid) {
+        // ตรวจสอบว่าเป็นเจ้าของงานหรือไม่ (ใช้ userId แทน clientId)
+        if (jobData.userId !== currentUser.uid && jobData.clientId !== currentUser.uid) {
           toast.error('คุณไม่มีสิทธิ์เข้าถึงหน้านี้');
           navigate('/');
           return;
@@ -282,7 +283,7 @@ export default function ClientJobReview() {
                 <p className="text-gray-400">รหัสงาน: {job.id}</p>
               </div>
               <div className="px-4 py-2 bg-purple-500/10 text-purple-400 rounded-full text-sm font-bold border border-purple-500/20">
-                {job.status === 'review' || job.status === 'revision_requested' ? 'รอการยืนยัน' : job.status === 'completed' ? 'เสร็จสิ้น' : 'ยกเลิก'}
+                {job.status === 'submitted' || job.status === 'review' || job.status === 'revision_requested' ? 'รอการยืนยัน' : job.status === 'completed' ? 'เสร็จสิ้น' : 'ยกเลิก'}
               </div>
             </div>
             {artist && (
@@ -326,7 +327,7 @@ export default function ClientJobReview() {
               </div>
             )}
 
-            {(job.status === 'review' || job.status === 'revision_requested') && submission && (
+            {(job.status === 'submitted' || job.status === 'review' || job.status === 'revision_requested') && submission && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
                 <Button onClick={handleApprove} disabled={processing} className="bg-green-600 hover:bg-green-700 text-white py-8 rounded-2xl text-lg font-bold flex items-center justify-center gap-3">
                   {processing ? <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <><ShieldCheck size={24} /> ยืนยันรับงาน</>}

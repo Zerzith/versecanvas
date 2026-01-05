@@ -42,11 +42,14 @@ const JobDetail = () => {
     try {
       const q = query(
         collection(db, 'workSubmissions'),
-        where('jobId', '==', jobId),
-        where('status', '==', 'pending')
+        where('jobId', '==', jobId)
       );
       const querySnapshot = await getDocs(q);
-      setWorkSubmitted(!querySnapshot.empty);
+      // ตรวจสอบว่ามี submission ที่ไม่ใช่ rejected
+      const hasValidSubmission = querySnapshot.docs.some(
+        doc => doc.data().status !== 'rejected'
+      );
+      setWorkSubmitted(hasValidSubmission);
     } catch (error) {
       console.error('Error checking work submission:', error);
     }

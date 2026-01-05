@@ -74,7 +74,7 @@ export default function ArtistJobManagement() {
     if (selectedTab === 'ทั้งหมด') return true;
     if (selectedTab === 'กำลังทำงาน') return job.status === 'in_progress';
     if (selectedTab === 'รอแก้ไข') return job.status === 'revision_requested';
-    if (selectedTab === 'รอยืนยัน') return job.status === 'review';
+    if (selectedTab === 'รอยืนยัน') return job.status === 'submitted';
     if (selectedTab === 'เสร็จสิ้น') return job.status === 'completed';
     return true;
   });
@@ -121,11 +121,11 @@ export default function ArtistJobManagement() {
 
       // อัปเดตสถานะงาน
       await updateDoc(doc(db, 'jobs', selectedJob.id), {
-        status: 'review',
+        status: 'submitted',
         workSubmitted: true,
         workSubmittedAt: serverTimestamp(),
         watermarkedWorkUrl: watermarkedUrl,
-        originalWorkUrl: originalUrl
+        submittedWorkUrl: originalUrl
       });
 
       // สร้างการแจ้งเตือนให้ลูกค้า
@@ -243,14 +243,14 @@ export default function ArtistJobManagement() {
                       <h3 className="text-xl font-bold">{job.title}</h3>
                       <span className={`px-3 py-1 rounded-full text-xs ${
                         job.status === 'in_progress' ? 'bg-blue-500/20 text-blue-400' :
-                        job.status === 'review' ? 'bg-yellow-500/20 text-yellow-400' :
+                        job.status === 'submitted' ? 'bg-yellow-500/20 text-yellow-400' :
                         job.status === 'completed' ? 'bg-green-500/20 text-green-400' :
                         job.status === 'revision_requested' ? 'bg-orange-500/20 text-orange-400' :
                         job.status === 'cancelled' ? 'bg-red-500/20 text-red-400' :
                         'bg-gray-500/20 text-gray-400'
                       }`}>
                         {job.status === 'in_progress' ? 'กำลังทำงาน' :
-                         job.status === 'review' ? 'รอการยืนยัน' :
+                         job.status === 'submitted' ? 'รอการยืนยัน' :
                          job.status === 'completed' ? 'เสร็จสิ้น' :
                          job.status === 'revision_requested' ? 'ขอแก้ไข' :
                          job.status === 'cancelled' ? 'ยกเลิก' :
@@ -311,7 +311,7 @@ export default function ArtistJobManagement() {
                     )}
 
                     {/* สถานะรอยืนยัน */}
-                    {job.status === 'review' && (
+                    {job.status === 'submitted' && (
                       <div className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-yellow-500/20 text-yellow-400">
                         <Clock size={16} />
                         รอลูกค้าตรวจสอบ
