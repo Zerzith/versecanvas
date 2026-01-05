@@ -140,7 +140,9 @@ export default function EscrowManagement() {
         status: 'submitted',
         workSubmitted: true,
         workSubmittedAt: serverTimestamp(),
-        latestSubmissionId: submissionRef.id
+        latestSubmissionId: submissionRef.id,
+        watermarkedWorkUrl: watermarkedUrl,
+        submittedWorkUrl: originalUrl
       });
 
       // สร้างการแจ้งเตือนให้ลูกค้า
@@ -458,13 +460,23 @@ export default function EscrowManagement() {
                     <>
                       {job.status === 'submitted' && (
                         <>
-                          <button
-                            onClick={() => window.open(job.watermarkedWorkUrl || job.submittedWorkUrl, '_blank')}
-                            className="px-4 py-2 rounded-xl bg-[#2a2a2a] hover:bg-[#3a3a3a] transition flex items-center gap-2"
-                          >
-                            <Eye size={16} />
-                            ดูงาน (มีลายน้ำ)
-                          </button>
+                          {(job.watermarkedWorkUrl || job.submittedWorkUrl) ? (
+                            <button
+                              onClick={() => window.open(job.watermarkedWorkUrl || job.submittedWorkUrl, '_blank')}
+                              className="px-4 py-2 rounded-xl bg-[#2a2a2a] hover:bg-[#3a3a3a] transition flex items-center gap-2"
+                            >
+                              <Eye size={16} />
+                              ดูงาน (มีลายน้ำ)
+                            </button>
+                          ) : (
+                            <Link
+                              to={`/job/${job.id}/review`}
+                              className="px-4 py-2 rounded-xl bg-[#2a2a2a] hover:bg-[#3a3a3a] transition flex items-center gap-2"
+                            >
+                              <Eye size={16} />
+                              ดูงาน
+                            </Link>
+                          )}
                           <button
                             onClick={() => handleConfirmWork(job)}
                             disabled={loading}
