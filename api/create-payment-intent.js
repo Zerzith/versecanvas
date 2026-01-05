@@ -2,9 +2,9 @@
 // API: /api/create-payment-intent
 // สร้าง PaymentIntent สำหรับการชำระเงิน
 
-const Stripe = require('stripe');
+import Stripe from 'stripe';
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   // ตั้งค่า CORS
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -72,4 +72,4 @@ module.exports = async (req, res) => {
       code: error.code || 'unknown'
     });
   }
-};
+}
