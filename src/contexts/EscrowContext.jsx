@@ -140,8 +140,10 @@ export function EscrowProvider({ children }) {
 
       const job = jobSnap.data();
 
-      if (job.status !== 'submitted') {
-        throw new Error('งานยังไม่ได้ส่ง');
+      // ตรวจสอบว่างานถูกส่งแล้ว (รองรับหลายสถานะ)
+      const validStatuses = ['submitted', 'review', 'revision_requested'];
+      if (!validStatuses.includes(job.status)) {
+        throw new Error('งานยังไม่ได้ส่งหรือสถานะไม่ถูกต้อง');
       }
 
       if (!job.escrowLocked) {
