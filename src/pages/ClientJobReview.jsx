@@ -90,7 +90,7 @@ export default function ClientJobReview() {
 
     setProcessing(true);
     try {
-      const result = await releaseEscrow(jobId, job.acceptedFreelancerId);
+      const result = await releaseEscrow(jobId, currentUser.uid, job.acceptedFreelancerId);
       if (!result.success) throw new Error(result.error);
 
       await updateDoc(doc(db, 'workSubmissions', submission.id), {
