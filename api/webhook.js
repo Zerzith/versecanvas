@@ -2,9 +2,9 @@
 // API: /api/webhook
 // รับและประมวลผล Webhook Events จาก Stripe
 
-const Stripe = require('stripe');
-const { initializeApp, cert, getApps } = require('firebase-admin/app');
-const { getFirestore } = require('firebase-admin/firestore');
+import Stripe from 'stripe';
+import { initializeApp, cert, getApps } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 
 // Initialize Firebase Admin (ถ้ายังไม่ได้ initialize)
 if (!getApps().length) {
@@ -40,7 +40,7 @@ const getRawBody = (req) => {
   });
 };
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   // ตรวจสอบว่าเป็น POST method
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -107,7 +107,7 @@ module.exports = async (req, res) => {
       error: error.message || 'Webhook processing failed' 
     });
   }
-};
+}
 
 // ฟังก์ชันจัดการเมื่อชำระเงินสำเร็จ
 async function handlePaymentSuccess(paymentIntent) {
