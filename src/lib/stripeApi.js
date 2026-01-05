@@ -24,26 +24,27 @@ export async function createPaymentIntent(amount, currency = 'thb', metadata = {
       }),
     });
 
+    // Read response as text first to avoid "Body already consumed" error
+    const responseText = await response.text();
+    
     if (!response.ok) {
       let errorMessage = 'Failed to create payment intent';
       try {
-        const error = await response.json();
+        const error = JSON.parse(responseText);
         errorMessage = error.error || error.message || errorMessage;
       } catch (e) {
-        // If response is not JSON, try to get text
-        const text = await response.text();
-        console.error('Non-JSON response:', text);
+        console.error('Non-JSON response:', responseText);
         errorMessage = `Server error: ${response.status} ${response.statusText}`;
       }
       throw new Error(errorMessage);
     }
 
+    // Parse response text as JSON
     let data;
     try {
-      data = await response.json();
+      data = JSON.parse(responseText);
     } catch (e) {
-      const text = await response.text();
-      console.error('Failed to parse JSON response:', text);
+      console.error('Failed to parse JSON response:', responseText);
       throw new Error('Server returned invalid JSON response. Please check if the API is deployed correctly.');
     }
     return {
