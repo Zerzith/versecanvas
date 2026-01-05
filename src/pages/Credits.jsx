@@ -84,13 +84,24 @@ export default function Credits() {
 
   const handlePaymentSuccess = async (paymentIntent) => {
     try {
+      // Record payment in Firestore
       await handleSuccessfulPayment(currentUser.uid, paymentIntent, selectedPackage);
-      await waitForWebhookProcessing(paymentIntent.id);
+      
+      // Show success immediately - credits will be added by webhook
       setPaymentStatus('success');
+      
+      // Optionally wait for webhook in background (don't block UI)
+      waitForWebhookProcessing(paymentIntent.id).then((processed) => {
+        if (processed) {
+          console.log('Webhook processed successfully');
+        } else {
+          console.warn('Webhook processing timeout - credits may take a moment to appear');
+        }
+      });
     } catch (error) {
       console.error('Error handling payment success:', error);
       setPaymentStatus('error');
-      setPaymentError('การชำระเงินสำเร็จ แต่เกิดข้อผิดพลาดในการเพิ่มเครดิต กรุณารอสักครู่หรือติดต่อแอดมิน');
+      setPaymentError('การชำระเงินสำเร็จ แต่เกิดข้อผิดพลาดในการบันทึก กรุณารีเฟรชหน้าเว็บ');
     }
   };
 
