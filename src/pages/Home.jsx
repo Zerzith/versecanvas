@@ -184,7 +184,7 @@ export default function Home() {
             {popularStories.map((story, index) => (
               <Link 
                 key={story.id} 
-                to={`/stories/${story.id}`}
+                to={`/story/${story.id}`}
                 className="group bg-[#1a1a1a] rounded-xl overflow-hidden border border-[#2a2a2a] hover:border-pink-500/50 transition-all"
               >
                 <div className="aspect-[3/4] relative">
@@ -221,7 +221,7 @@ export default function Home() {
             {popularProducts.length > 0 ? popularProducts.map((product) => (
               <Link 
                 key={product.id} 
-                to={`/shop/${product.id}`}
+                to="/shop"
                 className="group bg-[#1a1a1a] rounded-xl overflow-hidden border border-[#2a2a2a] hover:border-yellow-500/50 transition-all"
               >
                 <div className="aspect-square relative">
@@ -262,7 +262,7 @@ export default function Home() {
             {newStories.map((story) => (
               <Link 
                 key={story.id} 
-                to={`/stories/${story.id}`}
+                to={`/story/${story.id}`}
                 className="group bg-[#1a1a1a] rounded-xl overflow-hidden border border-[#2a2a2a] hover:border-teal-500/50 transition-all"
               >
                 <div className="aspect-[3/4] relative">
