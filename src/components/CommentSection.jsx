@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Send, Trash2, MessageCircle, Clock, X } from 'lucide-react';
+import UserAvatar from './UserAvatar';
 import { useSocial } from '../contexts/SocialContext';
 import { useAuth } from '../contexts/AuthContext';
 import { formatDistanceToNow } from 'date-fns';
@@ -114,20 +115,15 @@ export default function CommentSection({ postId, postType = 'artwork', isOpen, o
           ) : (
             comments.map((comment) => (
               <div key={comment.id} className="flex gap-4 group">
-                {/* Avatar */}
-                <div className="flex-shrink-0">
-                  <img
-                    src={comment.userPhoto || '/default-avatar.png'}
-                    alt={comment.userName}
-                    className="w-10 h-10 rounded-full object-cover border border-[#2a2a2a]"
-                  />
-                </div>
-
-                {/* Comment Content */}
+                {/* Avatar & Name using UserAvatar for real-time updates */}
                 <div className="flex-1 min-w-0">
                   <div className="bg-[#1a1a1a] rounded-2xl p-4 border border-[#2a2a2a] group-hover:border-[#333] transition">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="font-bold text-white text-sm">{comment.userName}</span>
+                      <UserAvatar 
+                        userId={comment.userId} 
+                        showName={true} 
+                        className="w-8 h-8"
+                      />
                       {currentUser && comment.userId === currentUser.uid && (
                         <button
                           onClick={() => handleDelete(comment.id)}
@@ -157,11 +153,7 @@ export default function CommentSection({ postId, postType = 'artwork', isOpen, o
             {/* User Avatar */}
             {currentUser && (
               <div className="flex-shrink-0 pt-1">
-                <img
-                  src={currentUser.photoURL || '/default-avatar.png'}
-                  alt={currentUser.displayName}
-                  className="w-10 h-10 rounded-full object-cover border border-[#2a2a2a]"
-                />
+                <UserAvatar userId={currentUser.uid} className="w-10 h-10" />
               </div>
             )}
 

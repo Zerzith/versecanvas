@@ -5,6 +5,7 @@ import { Home, BookOpen, Palette, Briefcase, Compass, Search, Bell, User, LogOut
 import { useState } from 'react';
 import { useNotification } from '../contexts/NotificationContext';
 import NotificationPanel from './NotificationPanel';
+import UserAvatar from './UserAvatar';
 
 export default function Navbar() {
   const { currentUser, userProfile, logout } = useAuth();
@@ -178,32 +179,24 @@ export default function Navbar() {
                     onClick={() => setShowUserMenu(!showUserMenu)}
                     className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-[#2a2a2a] transition-colors"
                   >
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center overflow-hidden">
-                      {userProfile?.photoURL || currentUser?.photoURL ? (
-                        <img 
-                          src={userProfile?.photoURL || currentUser?.photoURL} 
-                          alt="Profile" 
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                            e.target.nextSibling.style.display = 'flex';
-                          }}
-                        />
-                      ) : null}
-                      <User size={18} className="text-white" style={{ display: (userProfile?.photoURL || currentUser?.photoURL) ? 'none' : 'block' }} />
-                    </div>
-                    <span className="text-sm text-gray-300 hidden sm:block">
-                      {userProfile?.displayName || currentUser?.displayName || currentUser?.email || 'User'}
-                    </span>
+                    <UserAvatar 
+                      userId={currentUser.uid} 
+                      className="w-8 h-8" 
+                      showName={true} 
+                      nameClassName="text-sm text-gray-300 hidden sm:block"
+                    />
                   </button>
 
                   {showUserMenu && (
                     <div className="absolute right-0 mt-2 w-56 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg shadow-xl overflow-hidden animate-scale-in">
                       <div className="p-4 border-b border-[#2a2a2a]">
-                        <p className="text-sm font-medium text-white">
-                          {userProfile?.displayName || currentUser?.displayName || 'User'}
-                        </p>
-                        <p className="text-xs text-gray-400 mt-1">
+                        <UserAvatar 
+                          userId={currentUser.uid} 
+                          showName={true} 
+                          className="w-10 h-10"
+                          nameClassName="text-sm font-medium text-white"
+                        />
+                        <p className="text-xs text-gray-400 mt-1 ml-13">
                           {currentUser?.email || 'Anonymous'}
                         </p>
                       </div>

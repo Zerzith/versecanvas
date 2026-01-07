@@ -6,6 +6,7 @@ import { useSocial } from '../contexts/SocialContext';
 import SocialActions from '../components/SocialActions';
 import CommentSection from '../components/CommentSection';
 import FollowButton from '../components/FollowButton';
+import UserAvatar from '../components/UserAvatar';
 import { collection, query, orderBy, getDocs, getDoc, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { format } from 'date-fns';
@@ -233,13 +234,14 @@ const StoryDetail = () => {
                   to={`/profile/${story.authorId}`}
                   className="flex items-center gap-3 mb-6 pb-6 border-b border-[#2a2a2a] hover:opacity-80 transition group"
                 >
-                  <img
-                    src={story.authorAvatar}
-                    alt={story.authorName}
-                    className="w-12 h-12 rounded-full object-cover"
-                  />
+                  <UserAvatar userId={story.authorId} className="w-12 h-12" />
                   <div className="flex-1">
-                    <p className="font-medium group-hover:text-purple-400 transition">{story.authorName}</p>
+                    <UserAvatar 
+                      userId={story.authorId} 
+                      showName={true} 
+                      className="hidden" 
+                      nameClassName="font-medium group-hover:text-purple-400 transition"
+                    />
                     <p className="text-xs text-gray-400">ผู้เขียน</p>
                   </div>
                 </Link>

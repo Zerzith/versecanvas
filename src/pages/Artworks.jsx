@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useSocial } from '../contexts/SocialContext';
 import SocialActions from '../components/SocialActions';
 import CommentSection from '../components/CommentSection';
+import UserAvatar from '../components/UserAvatar';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
 
@@ -157,7 +158,14 @@ const Artworks = ({ currentLanguage }) => {
               <p className="text-white font-medium mb-2 line-clamp-2">{title}</p>
               <div className="flex items-center justify-between text-white/80 text-sm">
                 <span className="hover:text-purple-400 transition">
-                  {artistName}
+                  {item.artistId ? (
+                    <UserAvatar 
+                      userId={item.artistId} 
+                      showName={true} 
+                      className="hidden" 
+                      nameClassName="hover:text-purple-400 transition"
+                    />
+                  ) : artistName}
                 </span>
                 <div className="flex items-center gap-3">
                   <span className="flex items-center gap-1">
@@ -399,14 +407,12 @@ const Artworks = ({ currentLanguage }) => {
                     to={`/profile/${selectedArtwork.artistId}`}
                     className="flex items-center gap-3 mb-4 hover:opacity-80 transition"
                   >
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center">
-                      {selectedArtwork.artistAvatar ? (
-                        <img src={selectedArtwork.artistAvatar} alt="" className="w-full h-full rounded-full object-cover" />
-                      ) : (
-                        <span className="font-bold">{selectedArtwork.artistName?.[0]}</span>
-                      )}
-                    </div>
-                    <span className="font-medium">{selectedArtwork.artistName}</span>
+                    <UserAvatar 
+                      userId={selectedArtwork.artistId} 
+                      showName={true} 
+                      className="w-10 h-10"
+                      nameClassName="font-medium"
+                    />
                   </Link>
 
                   <p className="text-gray-400 mb-4">{selectedArtwork.description}</p>

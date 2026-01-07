@@ -10,6 +10,7 @@ import {
   MessageCircle, Search, Send, MoreVertical, 
   Phone, Video, Info, Image, Smile, Paperclip, AlertCircle
 } from 'lucide-react';
+import UserAvatar from '../components/UserAvatar';
 
 export default function Messages() {
   const { currentUser } = useAuth();
@@ -338,13 +339,10 @@ export default function Messages() {
               >
                 {/* Avatar */}
                 <div className="relative flex-shrink-0">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center">
-                    {conv.user.avatar ? (
-                      <img src={conv.user.avatar} alt={conv.user.name} className="w-full h-full rounded-full object-cover" />
-                    ) : (
-                      <span className="text-lg font-bold">{conv.user.name[0]}</span>
-                    )}
-                  </div>
+                  <UserAvatar 
+                    userId={conv.user.id} 
+                    className="w-12 h-12" 
+                  />
                   {conv.user.online && (
                     <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-[#1a1a1a]"></div>
                   )}
@@ -380,15 +378,17 @@ export default function Messages() {
               to={`/profile/${selectedConversation.user.id}`}
               className="flex items-center gap-3 hover:opacity-80 transition"
             >
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center">
-                {selectedConversation.user.avatar ? (
-                  <img src={selectedConversation.user.avatar} alt={selectedConversation.user.name} className="w-full h-full rounded-full object-cover" />
-                ) : (
-                  <span className="font-bold">{selectedConversation.user.name[0]}</span>
-                )}
-              </div>
+              <UserAvatar 
+                userId={selectedConversation.user.id} 
+                className="w-10 h-10" 
+              />
               <div>
-                <div className="font-medium hover:text-purple-400 transition">{selectedConversation.user.name}</div>
+                <UserAvatar 
+                  userId={selectedConversation.user.id} 
+                  showName={true} 
+                  className="hidden" 
+                  nameClassName="font-medium hover:text-purple-400 transition"
+                />
                 <div className="text-xs text-gray-400">
                   {selectedConversation.user.online ? 'ออนไลน์' : 'ออฟไลน์'}
                 </div>
