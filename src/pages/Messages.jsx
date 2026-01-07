@@ -30,8 +30,22 @@ export default function Messages() {
   useEffect(() => {
     if (selectedConversation && currentUser) {
       subscribeToMessages(selectedConversation.id);
+      resetUnread(selectedConversation.id);
     }
   }, [selectedConversation, currentUser]);
+
+  const resetUnread = async (conversationId) => {
+    if (!currentUser) return;
+    const convRef = ref(realtimeDb, `conversations/${currentUser.uid}/${conversationId}`);
+    try {
+      const snapshot = await get(convRef);
+      if (snapshot.exists()) {
+        await set(ref(realtimeDb, `conversations/${currentUser.uid}/${conversationId}/unread`), 0);
+      }
+    } catch (error) {
+      console.error('Error resetting unread:', error);
+    }
+  };
 
   // Auto-open chat when userId is passed via URL params
   useEffect(() => {
@@ -50,7 +64,9 @@ export default function Messages() {
         }
 
         // 2. If not in list, check Realtime DB directly
-        const convId = `${currentUser.uid}_${userIdParam}`;
+        const convId = currentUser.uid < userIdParam 
+          ? `${currentUser.uid}_${userIdParam}` 
+          : `${userIdParam}_${currentUser.uid}`;
         const convRef = ref(realtimeDb, `conversations/${currentUser.uid}/${convId}`);
         const snapshot = await get(convRef);
 
@@ -182,17 +198,40 @@ export default function Messages() {
         timestamp: Date.now()
       });
 
-      // Update conversation timestamp
-      const convRef = ref(realtimeDb, `conversations/${currentUser.uid}/${selectedConversation.id}`);
-      const convData = {
+      // Update conversation for SENDER
+      const senderConvRef = ref(realtimeDb, `conversations/${currentUser.uid}/${selectedConversation.id}`);
+      const senderConvData = {
         userId: selectedConversation.user?.id || selectedConversation.userId,
         userName: selectedConversation.user?.name || selectedConversation.userName || 'ผู้ใช้',
         userAvatar: selectedConversation.user?.avatar || selectedConversation.userAvatar || null,
         online: selectedConversation.user?.online || selectedConversation.online || false,
         timestamp: Date.now(),
-        unread: selectedConversation.unread || 0
+        unread: 0 // Reset unread for sender
       };
-      await set(convRef, convData);
+      await set(senderConvRef, senderConvData);
+
+      // Update conversation for RECEIVER
+      const receiverId = selectedConversation.user?.id || selectedConversation.userId;
+      if (receiverId) {
+        const receiverConvRef = ref(realtimeDb, `conversations/${receiverId}/${selectedConversation.id}`);
+        
+        // Get current unread count for receiver
+        const receiverSnapshot = await get(receiverConvRef);
+        let currentUnread = 0;
+        if (receiverSnapshot.exists()) {
+          currentUnread = receiverSnapshot.val().unread || 0;
+        }
+
+        const receiverConvData = {
+          userId: currentUser.uid,
+          userName: currentUser.displayName || currentUser.email?.split('@')[0] || 'ผู้ใช้',
+          userAvatar: currentUser.photoURL || null,
+          online: true, // Sender is online
+          timestamp: Date.now(),
+          unread: currentUnread + 1
+        };
+        await set(receiverConvRef, receiverConvData);
+      }
 
       setNewMessage('');
     } catch (error) {
@@ -204,11 +243,16 @@ export default function Messages() {
   const startNewConversation = async (userId, userName) => {
     if (!currentUser) return;
 
-    const convId = `${currentUser.uid}_${userId}`;
-    const convRef = ref(realtimeDb, `conversations/${currentUser.uid}/${convId}`);
+    // Use a consistent conversation ID format: smallerUID_largerUID
+    const convId = currentUser.uid < userId 
+      ? `${currentUser.uid}_${userId}` 
+      : `${userId}_${currentUser.uid}`;
+      
+    const senderConvRef = ref(realtimeDb, `conversations/${currentUser.uid}/${convId}`);
     
     try {
-      await set(convRef, {
+      // Create/Update for sender
+      await set(senderConvRef, {
         userId,
         userName,
         userAvatar: null,
