@@ -241,7 +241,7 @@ export default function Home() {
               </Link>
             )) : (
               <div className="col-span-full py-12 text-center bg-[#1a1a1a] rounded-xl border border-dashed border-[#2a2a2a]">
-                <p className="text-gray-500">ยังไม่มีสินค้าแนะนำในขณะนี้</p>
+                <p className="text-gray-500">ยังไม่มีสินค้า</p>
               </div>
             )}
           </div>
