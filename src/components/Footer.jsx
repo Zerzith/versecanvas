@@ -10,7 +10,6 @@ export default function Footer() {
           </p>
           <p className="text-gray-500 text-xs mt-2 flex items-center justify-center space-x-1">
             <span>Made with</span>
-            <Heart size={14} className="text-pink-500 fill-pink-500" />
             <span>for creators</span>
           </p>
         </div>
