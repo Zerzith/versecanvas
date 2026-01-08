@@ -32,7 +32,7 @@ export default function Navbar() {
   const t = {
     th: {
       home: 'หน้าแรก',
-      stories: 'เรื่อง',
+      stories: 'นิยาย',
       artworks: 'ผลงาน',
       artseek: 'Artseek',
       explore: 'สำรวจ',
