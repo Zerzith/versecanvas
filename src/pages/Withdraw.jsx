@@ -19,7 +19,7 @@ export default function Withdraw() {
   const [success, setSuccess] = useState(false);
   const [withdrawHistory, setWithdrawHistory] = useState([]);
 
-  const CREDIT_TO_BAHT_RATE = 0.5; // 1 เครดิต = 0.5 บาท
+  const CREDIT_TO_BAHT_RATE = 0.09; // 1 เครดิต = 0.5 บาท
   const MIN_WITHDRAW_CREDITS = 100; // ถอนขั้นต่ำ 100 เครดิต
   const MAX_WITHDRAW_CREDITS = 10000; // ถอนสูงสุด 10,000 เครดิต
 
