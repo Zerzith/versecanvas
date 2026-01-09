@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Sparkles, TrendingUp, Users, BookOpen, Palette, ShoppingCart, Handshake, Share2, Star, Clock, ShoppingBag } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import UserAvatar from '../components/UserAvatar';
 import { db } from '../lib/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 
@@ -199,7 +200,15 @@ export default function Home() {
                 </div>
                 <div className="p-3">
                   <h3 className="text-white font-medium text-sm truncate group-hover:text-pink-500 transition-colors">{story.title}</h3>
-                  <p className="text-gray-500 text-xs mt-1 truncate">โดย {story.authorName || 'นักเขียน'}</p>
+                  <div className="flex items-center gap-1 mt-1">
+                    <span className="text-gray-500 text-xs">โดย</span>
+                    <UserAvatar 
+                      userId={story.authorId} 
+                      showName={true} 
+                      className="hidden" 
+                      nameClassName="text-gray-500 text-xs truncate"
+                    />
+                  </div>
                 </div>
               </Link>
             ))}
@@ -277,7 +286,15 @@ export default function Home() {
                 </div>
                 <div className="p-4">
                   <h3 className="text-white font-medium truncate group-hover:text-teal-500 transition-colors">{story.title}</h3>
-                  <p className="text-gray-500 text-xs mt-1 truncate">โดย {story.authorName || 'นักเขียน'}</p>
+                  <div className="flex items-center gap-1 mt-1">
+                    <span className="text-gray-500 text-xs">โดย</span>
+                    <UserAvatar 
+                      userId={story.authorId} 
+                      showName={true} 
+                      className="hidden" 
+                      nameClassName="text-gray-500 text-xs truncate"
+                    />
+                  </div>
                 </div>
               </Link>
             ))}

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { BookOpen, Search, Plus, Eye, Heart, Clock, RefreshCw } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import UserAvatar from '../components/UserAvatar';
 import { collection, query, orderBy, getDocs, where } from 'firebase/firestore';
 import { db, realtimeDb } from '../lib/firebase';
 import { ref, get } from 'firebase/database';
@@ -213,28 +214,26 @@ const Stories = () => {
                     {story.title}
                   </h3>
 
-                  {/* Author */}
-                  <div 
-                    className="flex items-center gap-2 mb-3 cursor-pointer hover:opacity-80 transition"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      window.location.href = `/profile/${story.authorId}`;
-                    }}
-                  >
-                    {story.authorAvatar ? (
-                      <img
-                        src={story.authorAvatar}
-                        alt={story.authorName}
-                        className="w-6 h-6 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center text-xs font-bold">
-                        {story.authorName?.[0]?.toUpperCase()}
-                      </div>
-                    )}
-                    <span className="text-sm text-gray-400 hover:text-purple-400 transition">{story.authorName}</span>
-                  </div>
+	                  {/* Author */}
+	                  <div 
+	                    className="flex items-center gap-2 mb-3 cursor-pointer hover:opacity-80 transition"
+	                    onClick={(e) => {
+	                      e.preventDefault();
+	                      e.stopPropagation();
+	                      window.location.href = `/profile/${story.authorId}`;
+	                    }}
+	                  >
+	                    <UserAvatar 
+	                      userId={story.authorId} 
+	                      className="w-6 h-6" 
+	                    />
+	                    <UserAvatar 
+	                      userId={story.authorId} 
+	                      showName={true} 
+	                      className="hidden" 
+	                      nameClassName="text-sm text-gray-400 hover:text-purple-400 transition"
+	                    />
+	                  </div>
 
                   {/* Stats */}
                   <div className="flex items-center justify-between text-sm text-gray-400">
