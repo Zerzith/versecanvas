@@ -22,7 +22,8 @@ const Artworks = ({ currentLanguage }) => {
   const [activeTab, setActiveTab] = useState('home');
   const [sortBy, setSortBy] = useState('popular');
   const { currentUser } = useAuth();
-  const { incrementView } = useSocial();
+  const { incrementView, toggleBookmark, isBookmarked } = useSocial();
+  const [bookmarked, setBookmarked] = useState(false);
 
   const categories = ['ทั้งหมด', 'ภาพวาด', 'ดิจิทัลอาร์ต', 'ภาพถ่าย', 'ภาพประกอบ', 'การออกแบบ', 'อื่นๆ'];
   const tabs = [
@@ -110,6 +111,22 @@ const Artworks = ({ currentLanguage }) => {
     setShowComments(true);
     // เพิ่มยอดวิว
     await incrementView(artwork.id, 'artwork');
+    
+    // ตรวจสอบสถานะการบันทึก
+    if (currentUser) {
+      const status = await isBookmarked(artwork.id);
+      setBookmarked(status);
+    }
+  };
+
+  const handleBookmark = async () => {
+    if (!currentUser || !selectedArtwork) return;
+    const result = await toggleBookmark(selectedArtwork.id, 'artwork', {
+      title: selectedArtwork.title,
+      imageUrl: selectedArtwork.imageUrl || selectedArtwork.image,
+      artistId: selectedArtwork.artistId
+    });
+    setBookmarked(result);
   };
 
   const formatNumber = (num) => {
@@ -436,11 +453,26 @@ const Artworks = ({ currentLanguage }) => {
                   </div>
 
                   {/* Social Actions */}
-                  <SocialActions
-                    postId={selectedArtwork.id}
-                    postType="artwork"
-                    onCommentClick={() => {}}
-                  />
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1">
+                      <SocialActions
+                        postId={selectedArtwork.id}
+                        postType="artwork"
+                        onCommentClick={() => {}}
+                      />
+                    </div>
+                    <button
+                      onClick={handleBookmark}
+                      className={`p-2 rounded-lg border transition ${
+                        bookmarked 
+                          ? 'bg-purple-600/20 border-purple-500 text-purple-400' 
+                          : 'bg-transparent border-[#3a3a3a] text-gray-400 hover:bg-[#2a2a2a]'
+                      }`}
+                      title={bookmarked ? "ยกเลิกการบันทึก" : "บันทึกรายการโปรด"}
+                    >
+                      <Bookmark size={20} fill={bookmarked ? "currentColor" : "none"} />
+                    </button>
+                  </div>
 
                   {/* Comments */}
                   <div className="mt-4 flex-1 overflow-y-auto">

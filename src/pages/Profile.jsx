@@ -17,12 +17,12 @@ export default function Profile() {
   const navigate = useNavigate();
   const { userId } = useParams();
   const { currentUser } = useAuth();
-  const { getFollowerCount, getFollowingCount } = useSocial();
+  const { getFollowerCount, getFollowingCount, getBookmarks } = useSocial();
   const [profile, setProfile] = useState(null);
   const [artworks, setArtworks] = useState([]);
   const [stories, setStories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('artworks'); // artworks, stories, about
+  const [activeTab, setActiveTab] = useState('artworks'); // artworks, stories, about, bookmarks
   const [isEditing, setIsEditing] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -37,6 +37,7 @@ export default function Profile() {
     artworks: 0,
     stories: 0
   });
+  const [bookmarks, setBookmarks] = useState([]);
 
   const isOwnProfile = currentUser?.uid === (userId || currentUser?.uid);
   const targetUserId = userId || currentUser?.uid;
@@ -82,6 +83,12 @@ export default function Profile() {
       const storiesSnap = await getDocs(storiesQuery);
       const storiesData = storiesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setStories(storiesData.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)));
+
+      // Fetch bookmarks if own profile
+      if (isOwnProfile) {
+        const bookmarksData = await getBookmarks();
+        setBookmarks(bookmarksData);
+      }
 
       // Set stats
       const followerCount = await getFollowerCount(targetUserId);
@@ -329,6 +336,15 @@ export default function Profile() {
               <Award size={18} />
               <span className="text-xs font-bold uppercase tracking-widest">เกี่ยวกับ</span>
             </button>
+            {isOwnProfile && (
+              <button 
+                onClick={() => setActiveTab('bookmarks')}
+                className={`flex items-center gap-2 py-4 border-t-2 transition ${activeTab === 'bookmarks' ? 'border-white text-white' : 'border-transparent text-gray-500'}`}
+              >
+                <Save size={18} />
+                <span className="text-xs font-bold uppercase tracking-widest">บันทึกไว้</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -418,6 +434,33 @@ export default function Profile() {
                 </div>
               </div>
             </div>
+          )}
+
+          {activeTab === 'bookmarks' && (
+            bookmarks.length > 0 ? (
+              bookmarks.map((item) => (
+                <Link 
+                  key={item.postId} 
+                  to={`/${item.postType === 'artwork' ? 'artwork' : 'story'}/${item.postId}`}
+                  className={`relative group overflow-hidden bg-[#1a1a1a] ${item.postType === 'artwork' ? 'aspect-square' : 'aspect-[3/4] rounded-lg'}`}
+                >
+                  <img 
+                    src={item.postType === 'artwork' ? item.imageUrl : item.coverImage} 
+                    className="w-full h-full object-cover transition duration-500 group-hover:scale-110" 
+                    alt="" 
+                  />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex flex-col items-center justify-center p-4 text-center">
+                    <p className="text-[10px] uppercase tracking-widest text-purple-400 mb-1">{item.postType === 'artwork' ? 'งานศิลปะ' : 'นิยาย'}</p>
+                    <h4 className="font-bold line-clamp-2">{item.title || item.name}</h4>
+                  </div>
+                </Link>
+              ))
+            ) : (
+              <div className="col-span-3 py-20 text-center text-gray-500">
+                <Save size={48} className="mx-auto mb-4 opacity-20" />
+                <p>ยังไม่มีรายการที่บันทึกไว้</p>
+              </div>
+            )
           )}
         </div>
       </div>

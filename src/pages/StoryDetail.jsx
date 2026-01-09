@@ -15,7 +15,8 @@ import { th } from 'date-fns/locale';
 const StoryDetail = () => {
   const { storyId } = useParams();
   const { currentUser } = useAuth();
-  const { incrementView, getViewCount, getLikeCount } = useSocial();
+  const { incrementView, getViewCount, getLikeCount, toggleBookmark, isBookmarked } = useSocial();
+  const [bookmarked, setBookmarked] = useState(false);
   const [story, setStory] = useState(null);
   const [chapters, setChapters] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,8 +34,26 @@ const StoryDetail = () => {
   useEffect(() => {
     if (storyId) {
       loadCounts();
+      checkBookmarkStatus();
     }
-  }, [storyId]);
+  }, [storyId, currentUser]);
+
+  const checkBookmarkStatus = async () => {
+    if (currentUser && storyId) {
+      const status = await isBookmarked(storyId);
+      setBookmarked(status);
+    }
+  };
+
+  const handleBookmark = async () => {
+    if (!currentUser) return;
+    const result = await toggleBookmark(storyId, 'story', {
+      title: story.title,
+      coverImage: story.coverImage,
+      authorId: story.authorId
+    });
+    setBookmarked(result);
+  };
 
   const loadCounts = async () => {
     const views = await getViewCount(storyId, 'story');
@@ -270,6 +289,17 @@ const StoryDetail = () => {
                   >
                     <MessageCircle size={18} />
                     แสดงความคิดเห็น
+                  </button>
+                  <button
+                    onClick={handleBookmark}
+                    className={`w-full py-3 rounded-xl border font-medium transition flex items-center justify-center gap-2 ${
+                      bookmarked 
+                        ? 'bg-purple-600/20 border-purple-500 text-purple-400' 
+                        : 'bg-transparent border-[#3a3a3a] text-gray-400 hover:bg-[#2a2a2a]'
+                    }`}
+                  >
+                    <Bookmark size={18} fill={bookmarked ? "currentColor" : "none"} />
+                    {bookmarked ? 'บันทึกแล้ว' : 'บันทึกรายการโปรด'}
                   </button>
                 </div>
               </div>
