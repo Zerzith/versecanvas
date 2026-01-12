@@ -237,7 +237,7 @@ export default function Home() {
             <Link to="/shop" className="text-purple-400 hover:text-purple-300 text-sm font-medium">ไปที่ร้านค้า</Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {popularProducts.length > 0 ? popularProducts.map((product) => (
+            {popularProducts.map((product) => (
               <Link 
                 key={product.id} 
                 to="/shop"
@@ -251,18 +251,14 @@ export default function Home() {
                   />
                 </div>
                 <div className="p-4">
-                  <h3 className="text-white font-medium truncate group-hover:text-yellow-500 transition-colors">{product.name}</h3>
-                  <div className="flex items-center justify-between mt-2">
-                    <span className="text-yellow-500 font-bold">{product.price} เครดิต</span>
-                    <span className="text-gray-500 text-xs">ขายไปแล้ว {product.soldCount || 0} ชิ้น</span>
+                  <h3 className="text-white font-medium truncate group-hover:text-yellow-500 transition-colors">{product.title}</h3>
+                  <div className="flex items-center gap-1 mt-1">
+                    <span className="text-gray-500 text-xs">ราคา</span>
+                    <span className="text-yellow-500 font-bold text-sm">{product.price} เครดิต</span>
                   </div>
                 </div>
               </Link>
-            )) : (
-              <div className="col-span-full py-12 text-center bg-[#1a1a1a] rounded-xl border border-dashed border-[#2a2a2a]">
-                <p className="text-gray-500">ยังไม่มีสินค้า</p>
-              </div>
-            )}
+            ))
           </div>
         </section>
 
