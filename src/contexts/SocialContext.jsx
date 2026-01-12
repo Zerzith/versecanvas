@@ -1,9 +1,12 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
-import { realtimeDb } from '../lib/firebase';
+import { realtimeDb, db } from '../lib/firebase';
 import { 
   ref, set, get, push, remove, onValue, update, increment 
 } from 'firebase/database';
+import { 
+  doc, setDoc, getDoc, deleteDoc, collection, query, where, getDocs, serverTimestamp 
+} from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 
 const SocialContext = createContext();
@@ -217,41 +220,47 @@ export const SocialProvider = ({ children }) => {
     }
   };
 
-  // ========== BOOKMARK SYSTEM ==========
+  // ========== BOOKMARK SYSTEM (Firestore) ==========
   const bookmarkPost = async (postId, postType = 'artwork', postData = {}) => {
     if (!currentUser) {
       toast.error('กรุณาเข้าสู่ระบบเพื่อบันทึก');
       return false;
     }
-    const bookmarkRef = ref(realtimeDb, `bookmarks/${currentUser.uid}/${postType}/${postId}`);
 
     try {
-      const snapshot = await get(bookmarkRef);
+      const bookmarkDocId = `${postType}_${postId}`;
+      const bookmarkRef = doc(db, `users/${currentUser.uid}/bookmarks`, bookmarkDocId);
+      const snapshot = await getDoc(bookmarkRef);
+
       if (snapshot.exists()) {
-        await remove(bookmarkRef);
+        // ลบบันทึก
+        await deleteDoc(bookmarkRef);
         toast.success('ลบออกจากรายการบันทึกแล้ว');
         return false;
       } else {
-        await set(bookmarkRef, {
+        // เพิ่มบันทึก
+        await setDoc(bookmarkRef, {
           postId,
           postType,
           ...postData,
-          timestamp: Date.now()
+          createdAt: serverTimestamp()
         });
         toast.success('บันทึกเรียบร้อยแล้ว');
         return true;
       }
     } catch (error) {
       console.error('Error toggling bookmark:', error);
+      toast.error('เกิดข้อผิดพลาดในการบันทึก');
       return false;
     }
   };
 
   const isBookmarked = async (postId, postType = 'artwork') => {
     if (!currentUser) return false;
-    const bookmarkRef = ref(realtimeDb, `bookmarks/${currentUser.uid}/${postType}/${postId}`);
     try {
-      const snapshot = await get(bookmarkRef);
+      const bookmarkDocId = `${postType}_${postId}`;
+      const bookmarkRef = doc(db, `users/${currentUser.uid}/bookmarks`, bookmarkDocId);
+      const snapshot = await getDoc(bookmarkRef);
       return snapshot.exists();
     } catch (error) {
       return false;
@@ -260,26 +269,30 @@ export const SocialProvider = ({ children }) => {
 
   const getBookmarks = async (postType = null) => {
     if (!currentUser) return [];
-    const bookmarksRef = postType 
-      ? ref(realtimeDb, `bookmarks/${currentUser.uid}/${postType}`)
-      : ref(realtimeDb, `bookmarks/${currentUser.uid}`);
-    
     try {
-      const snapshot = await get(bookmarksRef);
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-        if (postType) {
-          return Object.values(data).sort((a, b) => b.timestamp - a.timestamp);
-        } else {
-          const all = [];
-          Object.keys(data).forEach(type => {
-            Object.values(data[type]).forEach(b => all.push(b));
-          });
-          return all.sort((a, b) => b.timestamp - a.timestamp);
-        }
+      const bookmarksRef = collection(db, `users/${currentUser.uid}/bookmarks`);
+      let q;
+      
+      if (postType) {
+        q = query(bookmarksRef, where('postType', '==', postType));
+      } else {
+        q = query(bookmarksRef);
       }
-      return [];
+      
+      const snapshot = await getDocs(q);
+      const bookmarks = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      
+      // เรียงตามวันที่สร้างใหม่สุดก่อน
+      return bookmarks.sort((a, b) => {
+        const aTime = a.createdAt?.toDate?.()?.getTime() || 0;
+        const bTime = b.createdAt?.toDate?.()?.getTime() || 0;
+        return bTime - aTime;
+      });
     } catch (error) {
+      console.error('Error getting bookmarks:', error);
       return [];
     }
   };
