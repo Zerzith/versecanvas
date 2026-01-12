@@ -97,7 +97,6 @@ function App() {
                           <Route path="/profile" element={<Profile currentLanguage={currentLanguage} />} />
                           <Route path="/settings" element={<Settings currentLanguage={currentLanguage} />} />
                           <Route path="/messages" element={<Messages currentLanguage={currentLanguage} />} />
-                          <Route path="/messages/:userId" element={<Messages currentLanguage={currentLanguage} />} />
                           <Route path="/shop" element={<Shop currentLanguage={currentLanguage} />} />
                           <Route path="/add-product" element={<AddProduct currentLanguage={currentLanguage} />} />
                           <Route path="/edit-product/:productId" element={<EditProduct currentLanguage={currentLanguage} />} />
