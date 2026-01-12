@@ -5,7 +5,7 @@ import {
   ref, push, set, onValue, query, orderByChild, get
 } from 'firebase/database';
 import { doc, getDoc } from 'firebase/firestore';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useParams } from 'react-router-dom';
 import { 
   MessageCircle, Search, Send, MoreVertical, 
   Phone, Video, Info, Image, Smile, Paperclip, AlertCircle
@@ -14,6 +14,7 @@ import UserAvatar from '../components/UserAvatar';
 
 export default function Messages() {
   const { currentUser } = useAuth();
+  const { userId } = useParams();
   const [searchParams] = useSearchParams();
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
@@ -21,6 +22,7 @@ export default function Messages() {
   const [newMessage, setNewMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [targetUser, setTargetUser] = useState(null);
 
   useEffect(() => {
     if (currentUser) {
@@ -53,10 +55,10 @@ export default function Messages() {
     const initChat = async () => {
       if (!currentUser) return;
       
-      const userIdParam = searchParams.get('userId');
+      const userIdParam = userId || searchParams.get('userId');
       const userNameParam = searchParams.get('userName');
       
-      if (userIdParam) {
+      if (userIdParam && userIdParam !== currentUser.uid) {
         // 1. Check in already loaded conversations
         const existingConv = conversations.find(conv => conv.user.id === userIdParam);
         if (existingConv) {
@@ -93,7 +95,7 @@ export default function Messages() {
     };
 
     initChat();
-  }, [searchParams, currentUser, conversations.length > 0]);
+  }, [userId, searchParams, currentUser, conversations.length > 0]);
 
   const loadConversations = async () => {
     if (!currentUser) return;
