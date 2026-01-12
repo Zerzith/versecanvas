@@ -18,6 +18,10 @@ export default function Home() {
 
   useEffect(() => {
     loadData();
+    
+    // Refresh data every 30 seconds to show latest sales
+    const interval = setInterval(loadData, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const loadData = async () => {
@@ -244,7 +248,7 @@ export default function Home() {
                   <h3 className="text-white font-medium truncate group-hover:text-yellow-500 transition-colors">{product.name}</h3>
                   <div className="flex items-center justify-between mt-2">
                     <span className="text-yellow-500 font-bold">{product.price} เครดิต</span>
-                    <span className="text-gray-500 text-xs">ขายแล้ว {product.sales || 0}</span>
+                    <span className="text-gray-500 text-xs">ขายไปแล้ว {product.sales || 0} ชิ้น</span>
                   </div>
                 </div>
               </Link>
