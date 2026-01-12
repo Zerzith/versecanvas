@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Sparkles, TrendingUp, Users, BookOpen, Palette, ShoppingCart, Handshake, Share2, Star, Clock, ShoppingBag } from 'lucide-react';
+import { Sparkles, TrendingUp, Users, BookOpen, Palette, ShoppingCart, Handshake, Share2, Star, Clock } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import UserAvatar from '../components/UserAvatar';
 import { db } from '../lib/firebase';
@@ -12,7 +12,6 @@ export default function Home() {
     artworks: 0
   });
   const [popularStories, setPopularStories] = useState([]);
-  const [popularProducts, setPopularProducts] = useState([]);
   const [newStories, setNewStories] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -30,7 +29,6 @@ export default function Home() {
       await Promise.all([
         loadStats(),
         loadPopularStories(),
-        loadPopularProducts(),
         loadNewStories()
       ]);
     } catch (error) {
@@ -74,25 +72,6 @@ export default function Home() {
       setPopularStories(sorted);
     } catch (error) {
       console.error('Error loading popular stories:', error);
-    }
-  };
-
-  const loadPopularProducts = async () => {
-    try {
-      const productsRef = collection(db, 'products');
-      const snapshot = await getDocs(productsRef);
-      const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      // Filter products with stock and sort by sales count (like Shop.jsx)
-      const featured = products
-        .filter(p => {
-          const remainingQuantity = (p.quantity || 1) - (p.soldCount || 0);
-          return remainingQuantity > 0; // มีสต็อกเหลือ
-        })
-        .sort((a, b) => (b.soldCount || 0) - (a.soldCount || 0)) // เรียงตามยอดขาย
-        .slice(0, 4); // แสดงเฉพาะ 4 อันแรก
-      setPopularProducts(featured);
-    } catch (error) {
-      console.error('Error loading popular products:', error);
     }
   };
 
@@ -222,43 +201,6 @@ export default function Home() {
                 </div>
               </Link>
             ))}
-          </div>
-        </section>
-
-        {/* Popular Products */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-yellow-500/20 flex items-center justify-center">
-                <ShoppingBag className="w-6 h-6 text-yellow-500" />
-              </div>
-              <h2 className="text-2xl font-bold text-white">สินค้าแนะนำ</h2>
-            </div>
-            <Link to="/shop" className="text-purple-400 hover:text-purple-300 text-sm font-medium">ไปที่ร้านค้า</Link>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {popularProducts.map((product) => (
-              <Link 
-                key={product.id} 
-                to="/shop"
-                className="group bg-[#1a1a1a] rounded-xl overflow-hidden border border-[#2a2a2a] hover:border-yellow-500/50 transition-all"
-              >
-                <div className="aspect-square relative">
-                  <img 
-                    src={product.image || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&h=400&fit=crop'} 
-                    alt={product.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                </div>
-                <div className="p-4">
-                  <h3 className="text-white font-medium truncate group-hover:text-yellow-500 transition-colors">{product.title}</h3>
-                  <div className="flex items-center gap-1 mt-1">
-                    <span className="text-gray-500 text-xs">ราคา</span>
-                    <span className="text-yellow-500 font-bold text-sm">{product.price} เครดิต</span>
-                  </div>
-                </div>
-              </Link>
-            ))
           </div>
         </section>
 
