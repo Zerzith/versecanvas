@@ -202,7 +202,7 @@ const ArtworkDetail = () => {
 
                 {/* Follow Button */}
                 {!isOwner && currentUser && (
-                  <FollowButton userId={artwork.artistId} />
+                  <FollowButton targetUserId={artwork.artistId} />
                 )}
 
                 {/* Action Buttons */}

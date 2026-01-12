@@ -230,21 +230,24 @@ const StoryDetail = () => {
                   </div>
                 </div>
 
-                <Link 
-                  to={`/profile/${story.authorId}`}
-                  className="flex items-center gap-3 mb-6 pb-6 border-b border-[#2a2a2a] hover:opacity-80 transition group"
-                >
-                  <UserAvatar userId={story.authorId} className="w-12 h-12" />
-                  <div className="flex-1">
-                    <UserAvatar 
-                      userId={story.authorId} 
-                      showName={true} 
-                      className="hidden" 
-                      nameClassName="font-medium group-hover:text-purple-400 transition"
-                    />
-                    <p className="text-xs text-gray-400">ผู้เขียน</p>
-                  </div>
-                </Link>
+                <div className="flex items-center gap-3 mb-6 pb-6 border-b border-[#2a2a2a]">
+                  <Link 
+                    to={`/profile/${story.authorId}`}
+                    className="flex items-center gap-3 flex-1 hover:opacity-80 transition group"
+                  >
+                    <UserAvatar userId={story.authorId} className="w-12 h-12" />
+                    <div className="flex-1">
+                      <UserAvatar 
+                        userId={story.authorId} 
+                        showName={true} 
+                        className="hidden" 
+                        nameClassName="font-medium group-hover:text-purple-400 transition"
+                      />
+                      <p className="text-xs text-gray-400">ผู้เขียน</p>
+                    </div>
+                  </Link>
+                  <FollowButton targetUserId={story.authorId} />
+                </div>
 
                 <div className="flex flex-wrap gap-2 mb-6">
                   {story.tags?.map((tag, index) => (

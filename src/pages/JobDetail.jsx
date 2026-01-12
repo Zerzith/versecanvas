@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Briefcase, Clock, Coins, User, MessageCircle, Share2, Send, ArrowLeft, Users, Eye } from 'lucide-react';
+import FollowButton from '../components/FollowButton';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocial } from '../contexts/SocialContext';
 import { useEscrow } from '../contexts/EscrowContext';
@@ -422,6 +423,13 @@ ${message}`,
                   </div>
                 </div>
               </Link>
+
+              {/* Follow Button */}
+              {currentUser && currentUser.uid !== job.userId && (
+                <div className="mb-6 pb-6 border-b border-[#2a2a2a]">
+                  <FollowButton targetUserId={job.userId} />
+                </div>
+              )}
 
               {/* Profile Stats */}
               {ownerProfile && (

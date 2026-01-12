@@ -245,8 +245,8 @@ export default function Home() {
               >
                 <div className="aspect-square relative">
                   <img 
-                    src={product.images?.[0] || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&h=400&fit=crop'} 
-                    alt={product.name}
+                    src={product.image || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&h=400&fit=crop'} 
+                    alt={product.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                 </div>
