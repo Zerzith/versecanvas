@@ -16,7 +16,7 @@ import { th } from 'date-fns/locale';
 const ArtworkDetail = () => {
   const { artworkId } = useParams();
   const { currentUser } = useAuth();
-  const { incrementView, toggleBookmark, isBookmarked } = useSocial();
+  const { incrementView, bookmarkPost, isBookmarked } = useSocial();
   
   const [artwork, setArtwork] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -78,12 +78,15 @@ const ArtworkDetail = () => {
 
   const handleBookmark = async () => {
     if (!currentUser || !artwork) return;
-    const result = await toggleBookmark(artworkId, 'artwork', {
+    const result = await bookmarkPost(artworkId, 'artwork', {
       title: artwork.title,
       imageUrl: artwork.imageUrl || artwork.image,
       artistId: artwork.artistId
     });
     setBookmarked(result);
+    // รีเฟรชสถานะการบันทึก
+    const status = await isBookmarked(artworkId);
+    setBookmarked(status);
   };
 
   const handleDelete = async () => {

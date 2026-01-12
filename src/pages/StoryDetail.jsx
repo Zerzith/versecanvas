@@ -15,7 +15,7 @@ import { th } from 'date-fns/locale';
 const StoryDetail = () => {
   const { storyId } = useParams();
   const { currentUser } = useAuth();
-  const { incrementView, getViewCount, getLikeCount, toggleBookmark, isBookmarked } = useSocial();
+  const { incrementView, getViewCount, getLikeCount, bookmarkPost, isBookmarked } = useSocial();
   const [bookmarked, setBookmarked] = useState(false);
   const [story, setStory] = useState(null);
   const [chapters, setChapters] = useState([]);
@@ -47,7 +47,7 @@ const StoryDetail = () => {
 
   const handleBookmark = async () => {
     if (!currentUser) return;
-    const result = await toggleBookmark(storyId, 'story', {
+    const result = await bookmarkPost(storyId, 'story', {
       title: story.title,
       coverImage: story.coverImage,
       authorId: story.authorId

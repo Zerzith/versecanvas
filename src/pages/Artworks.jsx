@@ -22,7 +22,7 @@ const Artworks = ({ currentLanguage }) => {
   const [activeTab, setActiveTab] = useState('home');
   const [sortBy, setSortBy] = useState('popular');
   const { currentUser } = useAuth();
-  const { incrementView, toggleBookmark, isBookmarked } = useSocial();
+  const { incrementView, bookmarkPost, isBookmarked } = useSocial();
   const [bookmarked, setBookmarked] = useState(false);
   const navigate = useNavigate();
 
@@ -114,7 +114,7 @@ const Artworks = ({ currentLanguage }) => {
 
   const handleBookmark = async () => {
     if (!currentUser || !selectedArtwork) return;
-    const result = await toggleBookmark(selectedArtwork.id, 'artwork', {
+    const result = await bookmarkPost(selectedArtwork.id, 'artwork', {
       title: selectedArtwork.title,
       imageUrl: selectedArtwork.imageUrl || selectedArtwork.image,
       artistId: selectedArtwork.artistId
