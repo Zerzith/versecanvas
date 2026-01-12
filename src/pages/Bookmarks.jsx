@@ -113,7 +113,7 @@ export default function Bookmarks() {
   const getLink = (bookmark) => {
     switch (bookmark.itemType) {
       case 'story': return `/story/${bookmark.itemId}`;
-      case 'artwork': return `/artworks`;
+      case 'artwork': return `/artwork/${bookmark.itemId}`;
       case 'product': return `/shop`;
       default: return '#';
     }

@@ -42,6 +42,7 @@ import TransactionHistory from './pages/TransactionHistory';
 import ArtistJobManagement from './pages/ArtistJobManagement';
 import ClientJobReview from './pages/ClientJobReview';
 import Artworks from './pages/Artworks';
+import ArtworkDetail from './pages/ArtworkDetail';
 import UploadArtwork from './pages/UploadArtwork';
 import Withdraw from './pages/Withdraw';
 import AdminWithdrawals from './pages/AdminWithdrawals';
@@ -84,6 +85,7 @@ function App() {
                           <Route path="/bookmarks" element={<Bookmarks currentLanguage={currentLanguage} />} />
                           <Route path="/dashboard" element={<CreatorDashboard currentLanguage={currentLanguage} />} />
                           <Route path="/artworks" element={<Artworks currentLanguage={currentLanguage} />} />
+                          <Route path="/artwork/:artworkId" element={<ArtworkDetail currentLanguage={currentLanguage} />} />
                           <Route path="/upload-artwork" element={<UploadArtwork currentLanguage={currentLanguage} />} />
                           <Route path="/artwork/:artworkId/edit" element={<EditArtwork currentLanguage={currentLanguage} />} />
                           <Route path="/artseek" element={<Artseek currentLanguage={currentLanguage} />} />

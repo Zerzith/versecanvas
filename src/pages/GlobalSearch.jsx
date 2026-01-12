@@ -344,16 +344,17 @@ export default function GlobalSearch() {
                     </h2>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                       {filteredResults.artworks.map(artwork => (
-                        <div
+                        <Link
                           key={artwork.id}
-                          className="aspect-square rounded-xl overflow-hidden bg-[#1a1a1a] hover:scale-105 transition cursor-pointer"
+                          to={`/artwork/${artwork.id}`}
+                          className="aspect-square rounded-xl overflow-hidden bg-[#1a1a1a] hover:scale-105 transition"
                         >
                           <img
                             src={artwork.imageUrl}
                             alt={artwork.title}
                             className="w-full h-full object-cover"
                           />
-                        </div>
+                        </Link>
                       ))}
                     </div>
                   </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { collection, query, orderBy, getDocs, limit, where } from 'firebase/firestore';
 import { db, realtimeDb } from '../lib/firebase';
 import { ref, get } from 'firebase/database';
@@ -24,6 +24,7 @@ const Artworks = ({ currentLanguage }) => {
   const { currentUser } = useAuth();
   const { incrementView, toggleBookmark, isBookmarked } = useSocial();
   const [bookmarked, setBookmarked] = useState(false);
+  const navigate = useNavigate();
 
   const categories = ['ทั้งหมด', 'ภาพวาด', 'ดิจิทัลอาร์ต', 'ภาพถ่าย', 'ภาพประกอบ', 'การออกแบบ', 'อื่นๆ'];
   const tabs = [
@@ -106,17 +107,9 @@ const Artworks = ({ currentLanguage }) => {
     return matchesCategory && matchesSearch;
   });
 
-  const handleArtworkClick = async (artwork) => {
-    setSelectedArtwork(artwork);
-    setShowComments(true);
-    // เพิ่มยอดวิว
-    await incrementView(artwork.id, 'artwork');
-    
-    // ตรวจสอบสถานะการบันทึก
-    if (currentUser) {
-      const status = await isBookmarked(artwork.id);
-      setBookmarked(status);
-    }
+  const handleArtworkClick = (artwork) => {
+    // นำไปยังหน้ารายละเอียดแทนแสดง modal
+    navigate(`/artwork/${artwork.id}`);
   };
 
   const handleBookmark = async () => {
@@ -391,106 +384,7 @@ const Artworks = ({ currentLanguage }) => {
           </div>
         )}
 
-        {/* Artwork Modal */}
-        {selectedArtwork && showComments && (
-          <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-            <div className="bg-[#1a1a1a] rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="grid md:grid-cols-2 gap-6 p-6">
-                {/* Image */}
-                <div className="aspect-square rounded-xl overflow-hidden bg-[#2a2a2a]">
-                  <img
-                    src={selectedArtwork.imageUrl || selectedArtwork.image}
-                    alt={selectedArtwork.title}
-                    className="w-full h-full object-contain"
-                  />
-                </div>
 
-                {/* Details */}
-                <div className="flex flex-col">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-2xl font-bold">{selectedArtwork.title}</h2>
-                    <button
-                      onClick={() => {
-                        setSelectedArtwork(null);
-                        setShowComments(false);
-                      }}
-                      className="p-2 hover:bg-[#2a2a2a] rounded-lg transition"
-                    >
-                      ✕
-                    </button>
-                  </div>
-
-                  <Link
-                    to={`/profile/${selectedArtwork.artistId}`}
-                    className="flex items-center gap-3 mb-4 hover:opacity-80 transition"
-                  >
-                    <UserAvatar 
-                      userId={selectedArtwork.artistId} 
-                      showName={true} 
-                      className="w-10 h-10"
-                      nameClassName="font-medium"
-                    />
-                  </Link>
-
-                  <p className="text-gray-400 mb-4">{selectedArtwork.description}</p>
-
-                  {/* Stats & Date */}
-                  <div className="flex flex-col gap-2 mb-4 text-sm text-gray-400">
-                    <div className="flex items-center gap-4">
-                      <span className="flex items-center gap-1">
-                        <Heart size={16} className="text-pink-400" />
-                        {formatNumber(selectedArtwork.likes || 0)} ถูกใจ
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Eye size={16} className="text-blue-400" />
-                        {formatNumber(selectedArtwork.views || 0)} เข้าชม
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                      <Calendar size={14} />
-                      <span>อัปโหลดเมื่อ: {formatDate(selectedArtwork.createdAt)}</span>
-                    </div>
-                  </div>
-
-                  {/* Social Actions */}
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1">
-                      <SocialActions
-                        postId={selectedArtwork.id}
-                        postType="artwork"
-                        onCommentClick={() => {}}
-                      />
-                    </div>
-                    <button
-                      onClick={handleBookmark}
-                      className={`p-2 rounded-lg border transition ${
-                        bookmarked 
-                          ? 'bg-purple-600/20 border-purple-500 text-purple-400' 
-                          : 'bg-transparent border-[#3a3a3a] text-gray-400 hover:bg-[#2a2a2a]'
-                      }`}
-                      title={bookmarked ? "ยกเลิกการบันทึก" : "บันทึกรายการโปรด"}
-                    >
-                      <Bookmark size={20} fill={bookmarked ? "currentColor" : "none"} />
-                    </button>
-                  </div>
-
-                  {/* Comments */}
-                  <div className="mt-4 flex-1 overflow-y-auto">
-                    <CommentSection
-                      postId={selectedArtwork.id}
-                      postType="artwork"
-                      isOpen={showComments}
-                      onClose={() => {
-                        setSelectedArtwork(null);
-                        setShowComments(false);
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
