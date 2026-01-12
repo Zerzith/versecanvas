@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { 
-  Grid, List, Settings, MapPin, Link as LinkIcon, 
-  Calendar, Edit, MessageCircle, UserPlus, UserCheck,
-  Heart, MessageSquare, CreditCard, Award, Image as ImageIcon,
-  BookOpen, Star, Camera, Eye, Save, X
+  Edit, MessageCircle, UserPlus, UserCheck, MapPin, Link as LinkIcon,
+  Calendar, Save, X, Eye, Heart, Palette, BookOpen, Settings, Share2, Bookmark
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocial } from '../contexts/SocialContext';
@@ -12,12 +10,13 @@ import { db } from '../lib/firebase';
 import { doc, getDoc, collection, query, where, getDocs, orderBy, updateDoc } from 'firebase/firestore';
 import { uploadImage } from '../lib/cloudinary';
 import FollowButton from '../components/FollowButton';
+import UserAvatar from '../components/UserAvatar';
 
 export default function Profile() {
   const navigate = useNavigate();
   const { userId } = useParams();
   const { currentUser } = useAuth();
-  const { getFollowerCount, getFollowingCount, getBookmarks } = useSocial();
+  const { getFollowerCount, getFollowingCount } = useSocial();
   const [profile, setProfile] = useState(null);
   const [artworks, setArtworks] = useState([]);
   const [stories, setStories] = useState([]);
@@ -37,7 +36,6 @@ export default function Profile() {
     artworks: 0,
     stories: 0
   });
-  const [bookmarks, setBookmarks] = useState([]);
 
   const isOwnProfile = currentUser?.uid === (userId || currentUser?.uid);
   const targetUserId = userId || currentUser?.uid;
@@ -84,12 +82,6 @@ export default function Profile() {
       const storiesSnap = await getDocs(storiesQuery);
       const storiesData = storiesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setStories(storiesData);
-
-      // Fetch bookmarks if own profile
-      if (isOwnProfile) {
-        const bookmarksData = await getBookmarks();
-        setBookmarks(bookmarksData);
-      }
 
       // Set stats
       const followerCount = await getFollowerCount(targetUserId);
@@ -172,128 +164,134 @@ export default function Profile() {
     );
   }
 
-  const displayArtworks = activeTab === 'artworks' ? artworks : 
-                         activeTab === 'stories' ? stories :
-                         activeTab === 'bookmarks' ? bookmarks : [];
-
   return (
     <div className="min-h-screen bg-[#0f0f0f] text-white pt-24 pb-12">
       <div className="max-w-6xl mx-auto px-4">
         {/* Profile Header */}
-        <div className="bg-[#1a1a1a] rounded-3xl p-8 border border-[#2a2a2a] mb-8">
-          <div className="flex flex-col md:flex-row gap-8 items-start md:items-center">
-            {/* Avatar */}
-            <div className="relative">
-              <img
-                src={profile.photoURL || 'https://via.placeholder.com/200'}
-                alt={profile.displayName}
-                className="w-32 h-32 rounded-full object-cover border-4 border-purple-500"
-              />
-              {isOwnProfile && (
-                <label className="absolute bottom-0 right-0 bg-purple-600 p-2 rounded-full cursor-pointer hover:bg-purple-700 transition">
-                  <Camera size={20} />
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleProfileImageUpload}
-                    disabled={uploading}
-                    className="hidden"
-                  />
-                </label>
-              )}
+        <div className="mb-12">
+          <div className="flex flex-col md:flex-row gap-8 items-start">
+            {/* Avatar and Basic Info */}
+            <div className="flex flex-col items-center md:items-start gap-4">
+              <div className="relative">
+                <img
+                  src={profile.photoURL || 'https://via.placeholder.com/150'}
+                  alt={profile.displayName}
+                  className="w-32 h-32 rounded-full object-cover border-4 border-purple-500"
+                />
+                {isOwnProfile && (
+                  <label className="absolute bottom-0 right-0 bg-purple-600 p-2 rounded-full cursor-pointer hover:bg-purple-700 transition">
+                    <Edit size={18} />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleProfileImageUpload}
+                      disabled={uploading}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+              </div>
+              
+              {/* Stats */}
+              <div className="flex gap-6 text-center md:text-left">
+                <div>
+                  <div className="text-2xl font-bold">{stats.artworks}</div>
+                  <div className="text-xs text-gray-400">ผลงาน</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold">{stats.followers}</div>
+                  <div className="text-xs text-gray-400">ผู้ติดตาม</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold">{stats.following}</div>
+                  <div className="text-xs text-gray-400">กำลังติดตาม</div>
+                </div>
+              </div>
             </div>
 
-            {/* Info */}
+            {/* Profile Info */}
             <div className="flex-1">
-              <div className="flex items-center gap-4 mb-4">
-                <h1 className="text-3xl font-bold">{profile.displayName || 'ไม่ระบุชื่อ'}</h1>
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h1 className="text-3xl font-bold mb-2">{profile.displayName || 'ไม่ระบุชื่อ'}</h1>
+                  <p className="text-gray-400">{profile.role === 'artist' ? '🎨 ศิลปิน' : '👤 ผู้ใช้งาน'}</p>
+                </div>
+                {isOwnProfile && (
+                  <button
+                    onClick={() => setIsEditing(!isEditing)}
+                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition flex items-center gap-2"
+                  >
+                    <Edit size={16} />
+                    {isEditing ? 'ยกเลิก' : 'แก้ไข'}
+                  </button>
+                )}
                 {!isOwnProfile && currentUser && (
                   <FollowButton userId={targetUserId} />
                 )}
               </div>
 
-              {/* Stats */}
-              <div className="flex justify-center md:justify-start gap-8 mb-6">
-                <div className="text-center md:text-left">
-                  <span className="font-bold block md:inline mr-1">{stats.artworks + stats.stories}</span>
-                  <span className="text-gray-400 text-sm">โพสต์</span>
-                </div>
-                <div className="text-center md:text-left">
-                  <span className="font-bold block md:inline mr-1">{stats.followers}</span>
-                  <span className="text-gray-400 text-sm">ผู้ติดตาม</span>
-                </div>
-                <div className="text-center md:text-left">
-                  <span className="font-bold block md:inline mr-1">{stats.following}</span>
-                  <span className="text-gray-400 text-sm">กำลังติดตาม</span>
-                </div>
-                {profile?.createdAt && (
-                  <div className="text-center md:text-left">
-                    <span className="text-gray-400 text-sm flex items-center gap-1">
-                      <Calendar size={14} />
-                      {new Date(profile.createdAt.seconds ? profile.createdAt.seconds * 1000 : profile.createdAt).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' })}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Bio & Links */}
               {!isEditing ? (
-                <div className="space-y-2">
-                  <p className="font-medium">{profile.role === 'artist' ? '🎨 ศิลปิน' : '👤 ผู้ใช้งาน'}</p>
-                  <p className="text-sm text-gray-300 whitespace-pre-wrap">{profile.bio || 'ยังไม่มีคำอธิบายตัวเอง'}</p>
-                  {profile?.createdAt && (
-                    <p className="text-xs text-gray-500 flex items-center gap-1">
-                      <Calendar size={12} />
-                      เข้าร่วมเมื่อ {new Date(profile.createdAt.seconds ? profile.createdAt.seconds * 1000 : profile.createdAt).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}
-                    </p>
+                <div className="space-y-3">
+                  {profile.bio && (
+                    <p className="text-gray-300 text-sm">{profile.bio}</p>
                   )}
-                  <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm text-gray-400">
+                  <div className="flex flex-wrap gap-4 text-sm text-gray-400">
                     {profile.location && (
-                      <span className="flex items-center gap-1"><MapPin size={14} /> {profile.location}</span>
+                      <span className="flex items-center gap-1">
+                        <MapPin size={14} />
+                        {profile.location}
+                      </span>
                     )}
                     {profile.website && (
                       <a href={profile.website} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-blue-400 hover:underline">
-                        <LinkIcon size={14} /> {profile.website.replace(/^https?:\/\//, '')}
+                        <LinkIcon size={14} />
+                        {profile.website.replace(/^https?:\/\//, '')}
                       </a>
+                    )}
+                    {profile?.createdAt && (
+                      <span className="flex items-center gap-1">
+                        <Calendar size={14} />
+                        เข้าร่วมเมื่อ {new Date(profile.createdAt.seconds ? profile.createdAt.seconds * 1000 : profile.createdAt).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      </span>
                     )}
                   </div>
                 </div>
               ) : (
-                <div className="space-y-4 bg-[#2a2a2a] p-6 rounded-2xl">
+                <div className="space-y-4 bg-[#1a1a1a] p-6 rounded-2xl border border-[#2a2a2a]">
                   <div>
-                    <label className="block text-xs text-gray-500 mb-1 uppercase">ชื่อที่แสดง</label>
+                    <label className="block text-xs text-gray-500 mb-2 uppercase">ชื่อที่แสดง</label>
                     <input 
                       type="text" 
                       value={editForm.displayName} 
                       onChange={(e) => setEditForm({...editForm, displayName: e.target.value})}
-                      className="w-full bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-2 text-white"
+                      className="w-full bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-500 mb-1 uppercase">ประวัติ</label>
+                    <label className="block text-xs text-gray-500 mb-2 uppercase">ประวัติ</label>
                     <textarea 
                       value={editForm.bio} 
                       onChange={(e) => setEditForm({...editForm, bio: e.target.value})}
-                      className="w-full bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-2 text-white"
+                      className="w-full bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none"
                       rows={3}
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-500 mb-1 uppercase">สถานที่</label>
+                    <label className="block text-xs text-gray-500 mb-2 uppercase">สถานที่</label>
                     <input 
                       type="text" 
                       value={editForm.location} 
                       onChange={(e) => setEditForm({...editForm, location: e.target.value})}
-                      className="w-full bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-2 text-white"
+                      className="w-full bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-500 mb-1 uppercase">เว็บไซต์</label>
+                    <label className="block text-xs text-gray-500 mb-2 uppercase">เว็บไซต์</label>
                     <input 
                       type="url" 
                       value={editForm.website} 
                       onChange={(e) => setEditForm({...editForm, website: e.target.value})}
-                      className="w-full bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-2 text-white"
+                      className="w-full bg-[#0f0f0f] border border-[#2a2a2a] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none"
                     />
                   </div>
                   <div className="flex gap-2">
@@ -312,82 +310,116 @@ export default function Profile() {
                   </div>
                 </div>
               )}
-
-              {isOwnProfile && !isEditing && (
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="mt-4 px-6 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition flex items-center gap-2"
-                >
-                  <Edit size={16} /> แก้ไขโปรไฟล์
-                </button>
-              )}
             </div>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-4 overflow-x-auto mb-8 pb-2">
+        <div className="flex gap-4 overflow-x-auto mb-8 pb-2 border-b border-[#2a2a2a]">
           <button
             onClick={() => setActiveTab('artworks')}
-            className={`px-6 py-3 rounded-xl whitespace-nowrap transition ${
+            className={`px-6 py-3 whitespace-nowrap transition border-b-2 ${
               activeTab === 'artworks'
-                ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white'
-                : 'bg-[#1a1a1a] border border-[#2a2a2a] hover:border-purple-500'
+                ? 'border-purple-500 text-purple-400'
+                : 'border-transparent text-gray-400 hover:text-white'
             }`}
           >
-            <Grid size={18} className="inline mr-2" /> ผลงาน ({stats.artworks})
+            <Palette size={18} className="inline mr-2" />
+            ผลงาน ({stats.artworks})
           </button>
           <button
             onClick={() => setActiveTab('stories')}
-            className={`px-6 py-3 rounded-xl whitespace-nowrap transition ${
+            className={`px-6 py-3 whitespace-nowrap transition border-b-2 ${
               activeTab === 'stories'
-                ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white'
-                : 'bg-[#1a1a1a] border border-[#2a2a2a] hover:border-purple-500'
+                ? 'border-purple-500 text-purple-400'
+                : 'border-transparent text-gray-400 hover:text-white'
             }`}
           >
-            <BookOpen size={18} className="inline mr-2" /> นิยาย ({stats.stories})
+            <BookOpen size={18} className="inline mr-2" />
+            นิยาย ({stats.stories})
           </button>
-          {isOwnProfile && (
-            <button
-              onClick={() => setActiveTab('bookmarks')}
-              className={`px-6 py-3 rounded-xl whitespace-nowrap transition ${
-                activeTab === 'bookmarks'
-                  ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white'
-                  : 'bg-[#1a1a1a] border border-[#2a2a2a] hover:border-purple-500'
-              }`}
-            >
-              <Heart size={18} className="inline mr-2" /> บันทึก ({bookmarks.length})
-            </button>
-          )}
         </div>
 
-        {/* Content */}
-        {displayArtworks.length === 0 ? (
-          <div className="text-center py-20">
-            <ImageIcon className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-            <p className="text-gray-400">ยังไม่มีเนื้อหา</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {displayArtworks.map((item) => (
-              <Link
-                key={item.id}
-                to={activeTab === 'stories' ? `/story/${item.id}` : `/artwork/${item.id}`}
-                className="group relative overflow-hidden rounded-xl bg-[#1a1a1a] aspect-square hover:scale-105 transition"
-              >
-                <img
-                  src={item.coverImage || item.imageUrl || item.image || 'https://via.placeholder.com/300'}
-                  alt={item.title}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition flex items-end p-4">
-                  <div className="text-white opacity-0 group-hover:opacity-100 transition">
-                    <p className="font-bold text-sm line-clamp-2">{item.title}</p>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+        {/* Content Grid */}
+        {activeTab === 'artworks' && (
+          <>
+            {artworks.length === 0 ? (
+              <div className="text-center py-20">
+                <Palette className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                <p className="text-gray-400">ยังไม่มีผลงาน</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {artworks.map((artwork) => (
+                  <Link
+                    key={artwork.id}
+                    to={`/artwork/${artwork.id}`}
+                    className="group relative overflow-hidden rounded-xl bg-[#1a1a1a] aspect-square hover:scale-105 transition"
+                  >
+                    <img
+                      src={artwork.imageUrl || artwork.image || 'https://via.placeholder.com/300'}
+                      alt={artwork.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition flex items-end p-4">
+                      <div className="text-white opacity-0 group-hover:opacity-100 transition w-full">
+                        <p className="font-bold text-sm line-clamp-2 mb-2">{artwork.title}</p>
+                        <div className="flex gap-3 text-xs text-gray-300">
+                          <span className="flex items-center gap-1">
+                            <Heart size={12} /> {artwork.likes || 0}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Eye size={12} /> {artwork.views || 0}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {activeTab === 'stories' && (
+          <>
+            {stories.length === 0 ? (
+              <div className="text-center py-20">
+                <BookOpen className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                <p className="text-gray-400">ยังไม่มีนิยาย</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {stories.map((story) => (
+                  <Link
+                    key={story.id}
+                    to={`/story/${story.id}`}
+                    className="group bg-[#1a1a1a] rounded-2xl overflow-hidden border border-[#2a2a2a] hover:border-purple-500 transition"
+                  >
+                    <div className="aspect-video overflow-hidden bg-[#2a2a2a]">
+                      <img
+                        src={story.coverImage || 'https://via.placeholder.com/400x300'}
+                        alt={story.title}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                      />
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-bold line-clamp-2 group-hover:text-purple-400 transition mb-2">
+                        {story.title}
+                      </h3>
+                      <p className="text-sm text-gray-400 line-clamp-2 mb-3">
+                        {story.description}
+                      </p>
+                      <div className="flex items-center justify-between text-xs text-gray-500">
+                        <span>{story.category}</span>
+                        <span>{story.createdAt?.toLocaleDateString?.('th-TH') || 'ไม่ทราบ'}</span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
