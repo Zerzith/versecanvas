@@ -82,9 +82,15 @@ export default function Home() {
       const productsRef = collection(db, 'products');
       const snapshot = await getDocs(productsRef);
       const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      // Sort by sales or rating
-      const sorted = products.sort((a, b) => (b.sales || 0) - (a.sales || 0)).slice(0, 4);
-      setPopularProducts(sorted);
+      // Filter products with stock and sort by sales count (like Shop.jsx)
+      const featured = products
+        .filter(p => {
+          const remainingQuantity = (p.quantity || 1) - (p.soldCount || 0);
+          return remainingQuantity > 0; // มีสต็อกเหลือ
+        })
+        .sort((a, b) => (b.soldCount || 0) - (a.soldCount || 0)) // เรียงตามยอดขาย
+        .slice(0, 4); // แสดงเฉพาะ 4 อันแรก
+      setPopularProducts(featured);
     } catch (error) {
       console.error('Error loading popular products:', error);
     }
@@ -226,7 +232,7 @@ export default function Home() {
               <div className="w-10 h-10 rounded-lg bg-yellow-500/20 flex items-center justify-center">
                 <ShoppingBag className="w-6 h-6 text-yellow-500" />
               </div>
-              <h2 className="text-2xl font-bold text-white">สินค้ายอดฮิต</h2>
+              <h2 className="text-2xl font-bold text-white">สินค้าแนะนำ</h2>
             </div>
             <Link to="/shop" className="text-purple-400 hover:text-purple-300 text-sm font-medium">ไปที่ร้านค้า</Link>
           </div>
@@ -248,7 +254,7 @@ export default function Home() {
                   <h3 className="text-white font-medium truncate group-hover:text-yellow-500 transition-colors">{product.name}</h3>
                   <div className="flex items-center justify-between mt-2">
                     <span className="text-yellow-500 font-bold">{product.price} เครดิต</span>
-                    <span className="text-gray-500 text-xs">ขายไปแล้ว {product.sales || 0} ชิ้น</span>
+                    <span className="text-gray-500 text-xs">ขายไปแล้ว {product.soldCount || 0} ชิ้น</span>
                   </div>
                 </div>
               </Link>
