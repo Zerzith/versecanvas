@@ -37,7 +37,7 @@ export default function Profile() {
     stories: 0
   });
 
-  const isOwnProfile = currentUser?.uid === (userId || currentUser?.uid);
+  const isOwnProfile = currentUser?.uid === userId;
   const targetUserId = userId || currentUser?.uid;
 
   useEffect(() => {
