@@ -197,7 +197,7 @@ export default function Profile() {
                   </>
                 ) : (
                   <>
-                    <FollowButton userId={targetUserId} />
+                    <FollowButton targetUserId={targetUserId} />
                     <button 
                       onClick={() => navigate(`/messages?userId=${targetUserId}&userName=${profile.displayName}`)}
                       className="px-4 py-1.5 bg-[#2a2a2a] hover:bg-[#3a3a3a] rounded-lg text-sm font-medium transition flex items-center gap-2"
