@@ -186,7 +186,7 @@ const ArtworkDetail = () => {
                 )}
 
                 {/* Stats */}
-                <div className="grid grid-cols-3 gap-4 mb-6 pb-6 border-b border-[#2a2a2a]">
+                <div className="grid grid-cols-4 gap-4 mb-6 pb-6 border-b border-[#2a2a2a]">
                   <div className="text-center">
                     <div className="text-2xl font-bold text-pink-400">{formatNumber(likeCount)}</div>
                     <div className="text-xs text-gray-400">ไลค์</div>
@@ -198,6 +198,10 @@ const ArtworkDetail = () => {
                   <div className="text-center">
                     <div className="text-sm text-gray-400">{formatDate(artwork.createdAt)}</div>
                     <div className="text-xs text-gray-400">วันที่</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-sm text-gray-400">{artwork.category || 'ไม่ระบุ'}</div>
+                    <div className="text-xs text-gray-400">หมวดหมู</div>
                   </div>
                 </div>
 
