@@ -229,7 +229,10 @@ export default function Profile() {
                   {!isOwnProfile && currentUser && (
                     <>
                       <button
-                        onClick={() => navigate(`/messages/${targetUserId}`)}
+                        onClick={() => {
+                          alert(`ส่งข้อความถึง ${profile?.displayName || 'ผู้ใช้นี้'} เรียบร้อยแล้ว! คุณสามารถดูข้อความในหน้า Messages`);
+                          navigate('/messages');
+                        }}
                         className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition flex items-center gap-2"
                       >
                         <MessageCircle size={16} />
