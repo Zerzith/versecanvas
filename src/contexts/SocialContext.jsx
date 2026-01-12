@@ -228,13 +228,12 @@ export const SocialProvider = ({ children }) => {
     }
 
     try {
-      const bookmarkId = `${postType}_${postId}`;
-      const bookmarkRef = ref(realtimeDb, `bookmarks/${currentUser.uid}/${bookmarkId}`);
+      const bookmarkRef = ref(realtimeDb, `bookmarks/${currentUser.uid}/${postType}/${postId}`);
       const snapshot = await get(bookmarkRef);
 
       if (snapshot.exists()) {
         // ลบบันทึก
-        await set(bookmarkRef, null);
+        await remove(bookmarkRef);
         toast.success('ลบออกจากรายการบันทึกแล้ว');
         return false;
       } else {
@@ -258,8 +257,7 @@ export const SocialProvider = ({ children }) => {
   const isBookmarked = async (postId, postType = 'artwork') => {
     if (!currentUser) return false;
     try {
-      const bookmarkId = `${postType}_${postId}`;
-      const bookmarkRef = ref(realtimeDb, `bookmarks/${currentUser.uid}/${bookmarkId}`);
+      const bookmarkRef = ref(realtimeDb, `bookmarks/${currentUser.uid}/${postType}/${postId}`);
       const snapshot = await get(bookmarkRef);
       return snapshot.exists();
     } catch (error) {
@@ -275,14 +273,26 @@ export const SocialProvider = ({ children }) => {
       
       if (!snapshot.exists()) return [];
       
-      let bookmarks = Object.entries(snapshot.val()).map(([key, data]) => ({
-        id: key,
-        ...data
-      }));
+      let bookmarks = [];
+      const userBookmarks = snapshot.val();
+      
+      // ว่า userBookmarks มีโครงสร้างเฉพาะ contentType (artwork, story, job)
+      Object.entries(userBookmarks).forEach(([contentType, items]) => {
+        if (typeof items === 'object') {
+          Object.entries(items).forEach(([contentId, data]) => {
+            bookmarks.push({
+              id: `${contentType}_${contentId}`,
+              itemId: contentId,
+              itemType: contentType,
+              ...data
+            });
+          });
+        }
+      });
       
       // ถ้ามี postType ให้กรองเฉพาะประเภทนั้น
       if (postType) {
-        bookmarks = bookmarks.filter(b => b.postType === postType);
+        bookmarks = bookmarks.filter(b => b.itemType === postType);
       }
       
       // เรียงตามวันที่สร้างใหม่สุดก่อน
