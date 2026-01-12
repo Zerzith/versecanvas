@@ -1,21 +1,20 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { getDoc, doc, deleteDoc, updateDoc } from 'firebase/firestore';
-import { db, realtimeDb } from '../lib/firebase';
-import { ref, get } from 'firebase/database';
-import { Eye, Heart, Calendar, ArrowLeft, Edit, Trash2, Share2, Bookmark } from 'lucide-react';
+import { useParams, Link } from 'react-router-dom';
+import { Eye, Heart, Calendar, Edit, Trash2, Bookmark } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocial } from '../contexts/SocialContext';
 import SocialActions from '../components/SocialActions';
 import CommentSection from '../components/CommentSection';
 import FollowButton from '../components/FollowButton';
 import UserAvatar from '../components/UserAvatar';
+import { getDoc, doc, deleteDoc } from 'firebase/firestore';
+import { db, realtimeDb } from '../lib/firebase';
+import { ref, get } from 'firebase/database';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
 
-const ArtworkDetail = ({ currentLanguage }) => {
+const ArtworkDetail = () => {
   const { artworkId } = useParams();
-  const navigate = useNavigate();
   const { currentUser } = useAuth();
   const { incrementView, toggleBookmark, isBookmarked } = useSocial();
   
@@ -24,11 +23,11 @@ const ArtworkDetail = ({ currentLanguage }) => {
   const [bookmarked, setBookmarked] = useState(false);
   const [viewCount, setViewCount] = useState(0);
   const [likeCount, setLikeCount] = useState(0);
+  const [showComments, setShowComments] = useState(false);
 
   useEffect(() => {
-    fetchArtworkDetail();
-    // เพิ่มยอดวิว
     if (artworkId) {
+      fetchArtworkDetail();
       incrementView(artworkId, 'artwork');
     }
   }, [artworkId]);
@@ -49,7 +48,6 @@ const ArtworkDetail = ({ currentLanguage }) => {
   const fetchArtworkDetail = async () => {
     setLoading(true);
     try {
-      // ดึงข้อมูลผลงานจาก Firestore
       const artworkDoc = await getDoc(doc(db, 'artworks', artworkId));
       if (artworkDoc.exists()) {
         const data = artworkDoc.data();
@@ -98,7 +96,7 @@ const ArtworkDetail = ({ currentLanguage }) => {
       try {
         await deleteDoc(doc(db, 'artworks', artworkId));
         alert('ลบผลงานสำเร็จ');
-        navigate('/artworks');
+        window.location.href = '/artworks';
       } catch (error) {
         console.error('Error deleting artwork:', error);
         alert('เกิดข้อผิดพลาดในการลบผลงาน');
@@ -141,12 +139,12 @@ const ArtworkDetail = ({ currentLanguage }) => {
       <div className="min-h-screen bg-[#0f0f0f] text-white pt-20 flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-400 mb-4">ไม่พบผลงาน</p>
-          <button
-            onClick={() => navigate('/artworks')}
-            className="px-6 py-2 bg-purple-500 hover:bg-purple-600 rounded-lg transition"
+          <Link
+            to="/artworks"
+            className="px-6 py-2 bg-purple-500 hover:bg-purple-600 rounded-lg transition inline-block"
           >
             กลับไปยังผลงาน
-          </button>
+          </Link>
         </div>
       </div>
     );
@@ -155,157 +153,157 @@ const ArtworkDetail = ({ currentLanguage }) => {
   const isOwner = currentUser && artwork.artistId === currentUser.uid;
 
   return (
-    <div className="min-h-screen bg-[#0f0f0f] text-white pt-20">
-      <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-[#0f0f0f] text-white pt-20 pb-12">
+      <div className="max-w-6xl mx-auto px-4">
         {/* Back Button */}
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 mb-6 text-gray-400 hover:text-white transition"
+        <Link
+          to="/artworks"
+          className="inline-flex items-center gap-2 mb-6 text-gray-400 hover:text-purple-400 transition"
         >
-          <ArrowLeft size={20} />
-          กลับ
-        </button>
+          ← กลับไปหน้าผลงาน
+        </Link>
 
         {/* Main Content */}
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Image Section */}
-          <div className="md:col-span-2">
-            <div className="rounded-2xl overflow-hidden bg-[#1a1a1a] aspect-square md:aspect-auto">
-              <img
-                src={artwork.imageUrl || artwork.image || 'https://via.placeholder.com/600x600'}
-                alt={artwork.title}
-                className="w-full h-full object-cover"
-              />
+          <div className="lg:col-span-1">
+            <div className="bg-[#1a1a1a] rounded-2xl overflow-hidden border-2 border-[#2a2a2a] sticky top-8">
+              <div className="relative aspect-square overflow-hidden">
+                <img
+                  src={artwork.imageUrl || artwork.image || 'https://via.placeholder.com/600x600'}
+                  alt={artwork.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+
+              <div className="p-6">
+                <h1 className="text-2xl font-bold mb-2">{artwork.title}</h1>
+                {artwork.category && (
+                  <p className="text-sm text-gray-400 mb-4">{artwork.category}</p>
+                )}
+
+                {/* Stats */}
+                <div className="grid grid-cols-3 gap-4 mb-6 pb-6 border-b border-[#2a2a2a]">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-pink-400">{formatNumber(likeCount)}</div>
+                    <div className="text-xs text-gray-400">ไลค์</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-400">{formatNumber(viewCount)}</div>
+                    <div className="text-xs text-gray-400">วิว</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-sm text-gray-400">{formatDate(artwork.createdAt)}</div>
+                    <div className="text-xs text-gray-400">วันที่</div>
+                  </div>
+                </div>
+
+                {/* Artist Info */}
+                <Link 
+                  to={`/profile/${artwork.artistId}`}
+                  className="flex items-center gap-3 mb-6 pb-6 border-b border-[#2a2a2a] hover:opacity-80 transition group"
+                >
+                  <UserAvatar userId={artwork.artistId} className="w-12 h-12" />
+                  <div className="flex-1">
+                    <UserAvatar 
+                      userId={artwork.artistId} 
+                      showName={true} 
+                      className="hidden" 
+                      nameClassName="font-medium group-hover:text-purple-400 transition"
+                    />
+                    <p className="text-xs text-gray-400">ศิลปิน</p>
+                  </div>
+                </Link>
+
+                {/* Follow Button */}
+                {!isOwner && currentUser && (
+                  <FollowButton userId={artwork.artistId} />
+                )}
+
+                {/* Action Buttons */}
+                <div className="space-y-3">
+                  {isOwner && (
+                    <>
+                      <Link
+                        to={`/artwork/${artworkId}/edit`}
+                        className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 font-medium transition flex items-center justify-center gap-2"
+                      >
+                        <Edit size={18} />
+                        แก้ไข
+                      </Link>
+                      <button
+                        onClick={handleDelete}
+                        className="w-full py-3 rounded-xl bg-red-600 hover:bg-red-700 font-medium transition flex items-center justify-center gap-2"
+                      >
+                        <Trash2 size={18} />
+                        ลบ
+                      </button>
+                    </>
+                  )}
+                  <button
+                    onClick={() => setShowComments(true)}
+                    className="w-full py-3 rounded-xl bg-[#2a2a2a] hover:bg-[#3a3a3a] font-medium transition"
+                  >
+                    ดูความเห็น
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Details Section */}
-          <div className="flex flex-col">
-            {/* Title and Actions */}
-            <div className="mb-6">
-              <h1 className="text-3xl font-bold mb-4">{artwork.title}</h1>
-              
-              <div className="flex items-center gap-2 mb-4">
-                {isOwner && (
-                  <>
-                    <Link
-                      to={`/artwork/${artworkId}/edit`}
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition"
-                    >
-                      <Edit size={16} />
-                      แก้ไข
-                    </Link>
-                    <button
-                      onClick={handleDelete}
-                      className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition"
-                    >
-                      <Trash2 size={16} />
-                      ลบ
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Artist Info */}
-            <div className="mb-6 pb-6 border-b border-[#2a2a2a]">
-              <Link
-                to={`/profile/${artwork.artistId}`}
-                className="flex items-center gap-3 mb-4 hover:opacity-80 transition"
-              >
-                <UserAvatar 
-                  userId={artwork.artistId} 
-                  showName={true} 
-                  className="w-12 h-12"
-                  nameClassName="font-medium text-lg"
-                />
-              </Link>
-              {!isOwner && currentUser && (
-                <FollowButton userId={artwork.artistId} />
-              )}
-            </div>
-
-            {/* Stats */}
-            <div className="mb-6 pb-6 border-b border-[#2a2a2a]">
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <Heart size={18} className="text-pink-400" />
-                  <span className="text-gray-400">
-                    {formatNumber(likeCount)} ถูกใจ
-                  </span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Eye size={18} className="text-blue-400" />
-                  <span className="text-gray-400">
-                    {formatNumber(viewCount)} เข้าชม
-                  </span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Calendar size={18} className="text-green-400" />
-                  <span className="text-gray-400">
-                    {formatDate(artwork.createdAt)}
-                  </span>
-                </div>
-              </div>
-            </div>
-
+          <div className="lg:col-span-2">
             {/* Description */}
             {artwork.description && (
-              <div className="mb-6 pb-6 border-b border-[#2a2a2a]">
-                <h3 className="font-semibold mb-2">รายละเอียด</h3>
-                <p className="text-gray-400 text-sm leading-relaxed">
+              <div className="bg-[#1a1a1a] rounded-2xl p-6 border border-[#2a2a2a] mb-6">
+                <h2 className="text-xl font-bold mb-4">รายละเอียด</h2>
+                <p className="text-gray-400 leading-relaxed whitespace-pre-wrap">
                   {artwork.description}
                 </p>
               </div>
             )}
 
-            {/* Category and Tags */}
-            {artwork.category && (
-              <div className="mb-6 pb-6 border-b border-[#2a2a2a]">
-                <h3 className="font-semibold mb-2">หมวดหมู่</h3>
-                <div className="flex flex-wrap gap-2">
-                  <span className="px-3 py-1 bg-purple-500/20 border border-purple-500 rounded-full text-sm text-purple-300">
-                    {artwork.category}
-                  </span>
+            {/* Social Actions */}
+            <div className="bg-[#1a1a1a] rounded-2xl p-6 border border-[#2a2a2a] mb-6">
+              <SocialActions
+                postId={artworkId}
+                postType="artwork"
+                onCommentClick={() => setShowComments(true)}
+              />
+              <button
+                onClick={handleBookmark}
+                className={`mt-4 w-full py-3 rounded-lg border transition flex items-center justify-center gap-2 ${
+                  bookmarked 
+                    ? 'bg-purple-600/20 border-purple-500 text-purple-400' 
+                    : 'bg-transparent border-[#3a3a3a] text-gray-400 hover:bg-[#2a2a2a]'
+                }`}
+              >
+                <Bookmark size={20} fill={bookmarked ? "currentColor" : "none"} />
+                {bookmarked ? 'ยกเลิกการบันทึก' : 'บันทึกรายการโปรด'}
+              </button>
+            </div>
+
+            {/* Comments Section */}
+            {showComments && (
+              <div className="bg-[#1a1a1a] rounded-2xl p-6 border border-[#2a2a2a]">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold">ความเห็น</h2>
+                  <button
+                    onClick={() => setShowComments(false)}
+                    className="text-gray-400 hover:text-white transition"
+                  >
+                    ✕
+                  </button>
                 </div>
+                <CommentSection
+                  postId={artworkId}
+                  postType="artwork"
+                  isOpen={showComments}
+                  onClose={() => setShowComments(false)}
+                />
               </div>
             )}
-
-            {/* Social Actions */}
-            <div className="mb-6">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="flex-1">
-                  <SocialActions
-                    postId={artworkId}
-                    postType="artwork"
-                    onCommentClick={() => {}}
-                  />
-                </div>
-                <button
-                  onClick={handleBookmark}
-                  className={`p-2 rounded-lg border transition ${
-                    bookmarked 
-                      ? 'bg-purple-600/20 border-purple-500 text-purple-400' 
-                      : 'bg-transparent border-[#3a3a3a] text-gray-400 hover:bg-[#2a2a2a]'
-                  }`}
-                  title={bookmarked ? "ยกเลิกการบันทึก" : "บันทึกรายการโปรด"}
-                >
-                  <Bookmark size={20} fill={bookmarked ? "currentColor" : "none"} />
-                </button>
-              </div>
-            </div>
           </div>
-        </div>
-
-        {/* Comments Section */}
-        <div className="mt-12 pt-8 border-t border-[#2a2a2a]">
-          <h2 className="text-2xl font-bold mb-6">ความเห็น</h2>
-          <CommentSection
-            postId={artworkId}
-            postType="artwork"
-            isOpen={true}
-            onClose={() => {}}
-          />
         </div>
       </div>
     </div>
