@@ -284,6 +284,8 @@ export const SocialProvider = ({ children }) => {
               id: `${contentType}_${contentId}`,
               itemId: contentId,
               itemType: contentType,
+              postType: contentType,
+              postId: contentId,
               ...data
             });
           });

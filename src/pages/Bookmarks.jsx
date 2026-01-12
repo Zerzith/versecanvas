@@ -21,6 +21,16 @@ export default function Bookmarks() {
     }
   }, [currentUser]);
 
+  // Refresh bookmarks every 5 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (currentUser) {
+        loadBookmarks();
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [currentUser]);
+
   const loadBookmarks = async () => {
     setLoading(true);
     try {
@@ -33,9 +43,10 @@ export default function Bookmarks() {
           let itemData = {};
           
           try {
-            // ดึงข้อมูลจาก Firestore ตาม postType
+            // ดึงข้อมูลจาก Firestore ตาม itemType หรือ postType
             let collectionName = '';
-            switch (bookmark.postType) {
+            const type = bookmark.postType || bookmark.itemType;
+            switch (type) {
               case 'story':
                 collectionName = 'stories';
                 break;
@@ -96,8 +107,8 @@ export default function Bookmarks() {
   const handleRemove = async (itemId, itemType) => {
     if (confirm('ต้องการลบรายการที่บันทึกไว้นี้?')) {
       await bookmarkPost(itemId, itemType);
-      // รีโหลด bookmarks
-      loadBookmarks();
+      // รีโหลด bookmarks ทันที
+      setTimeout(() => loadBookmarks(), 500);
     }
   };
 
