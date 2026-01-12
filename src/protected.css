@@ -19,11 +19,7 @@
 }
 
 /* ป้องกันการ Print */
-@media print {
-  .protected-content {
-    display: none !important;
-  }
-}
+
 
 /* Watermark สำหรับรูปภาพ */
 .watermarked-image {
