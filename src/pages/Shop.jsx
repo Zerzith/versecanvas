@@ -178,7 +178,14 @@ export default function Shop() {
     return matchesSearch && matchesCategory && inStock;
   });
 
-  const featuredProducts = products.filter(p => p.featured);
+  // สินค้ายอดฮิต: เรียงตามจำนวนการขาย (soldCount) จากมากไปน้อย
+  const featuredProducts = products
+    .filter(p => {
+      const remainingQuantity = (p.quantity || 1) - (p.soldCount || 0);
+      return remainingQuantity > 0; // มีสต็อกเหลือ
+    })
+    .sort((a, b) => (b.soldCount || 0) - (a.soldCount || 0)) // เรียงตามยอดขาย
+    .slice(0, 6); // แสดงเฉพาะ 6 อันแรก
 
   return (
     <div className="min-h-screen bg-[#0f0f0f] text-white pt-24">
