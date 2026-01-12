@@ -40,7 +40,7 @@ const ArtworkDetail = () => {
 
   const checkBookmarkStatus = async () => {
     if (currentUser && artworkId) {
-      const status = await isBookmarked(artworkId);
+      const status = await isBookmarked(artworkId, 'artwork');
       setBookmarked(status);
     }
   };
@@ -85,7 +85,7 @@ const ArtworkDetail = () => {
     });
     setBookmarked(result);
     // รีเฟรชสถานะการบันทึก
-    const status = await isBookmarked(artworkId);
+    const status = await isBookmarked(artworkId, 'artwork');
     setBookmarked(status);
   };
 

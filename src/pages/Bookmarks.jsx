@@ -24,7 +24,7 @@ export default function Bookmarks() {
   const loadBookmarks = async () => {
     setLoading(true);
     try {
-      // ดึง bookmarks จาก Realtime Database
+      // ดึง bookmarks จาก Firestore
       const bookmarksData = await getBookmarks();
       
       // ดึงข้อมูลเพิ่มเติมสำหรับแต่ละ bookmark
