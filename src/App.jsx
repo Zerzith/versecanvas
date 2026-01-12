@@ -6,7 +6,7 @@ import { CreditProvider } from './contexts/CreditContext';
 import { EscrowProvider } from './contexts/EscrowContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { SettingsProvider } from './contexts/SettingsContext';
-import { BookmarkProvider } from './contexts/BookmarkContext';
+
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -34,7 +34,7 @@ import AddChapter from './pages/AddChapter';
 import EditChapter from './pages/EditChapter';
 import EditArtwork from './pages/EditArtwork';
 import GlobalSearch from './pages/GlobalSearch';
-import Bookmarks from './pages/Bookmarks';
+
 import CreatorDashboard from './pages/CreatorDashboard';
 
 import OrderHistory from './pages/OrderHistory';
@@ -63,7 +63,6 @@ function App() {
         <SocialProvider>
           <CreditProvider>
             <EscrowProvider>
-              <BookmarkProvider>
               <NotificationProvider>
                 <Router>
                   <ProtectedContent>
@@ -82,7 +81,7 @@ function App() {
                           <Route path="/create-story" element={<CreateStory currentLanguage={currentLanguage} />} />
                           <Route path="/explore" element={<Explore currentLanguage={currentLanguage} />} />
                           <Route path="/search" element={<GlobalSearch currentLanguage={currentLanguage} />} />
-                          <Route path="/bookmarks" element={<Bookmarks currentLanguage={currentLanguage} />} />
+
                           <Route path="/dashboard" element={<CreatorDashboard currentLanguage={currentLanguage} />} />
                           <Route path="/artworks" element={<Artworks currentLanguage={currentLanguage} />} />
                           <Route path="/artwork/:artworkId" element={<ArtworkDetail currentLanguage={currentLanguage} />} />
@@ -119,7 +118,6 @@ function App() {
                   </ProtectedContent>
                 </Router>
               </NotificationProvider>
-              </BookmarkProvider>
             </EscrowProvider>
           </CreditProvider>
         </SocialProvider>

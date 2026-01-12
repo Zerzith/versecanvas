@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Briefcase, Clock, Coins, User, MessageCircle, Share2, Bookmark, Send, ArrowLeft, Users, Eye } from 'lucide-react';
+import { Briefcase, Clock, Coins, User, MessageCircle, Share2, Send, ArrowLeft, Users, Eye } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocial } from '../contexts/SocialContext';
 import { useEscrow } from '../contexts/EscrowContext';
@@ -13,7 +13,7 @@ const JobDetail = () => {
   const { jobId } = useParams();
   const navigate = useNavigate();
   const { currentUser } = useAuth();
-  const { bookmarkPost, isBookmarked } = useSocial();
+
   const { lockEscrow, loading: escrowLoading } = useEscrow();
   const { getUserCredits } = useCredit();
   const [job, setJob] = useState(null);
@@ -29,7 +29,7 @@ const JobDetail = () => {
   const [selectedArtist, setSelectedArtist] = useState(null);
   const [hasApplied, setHasApplied] = useState(false);
   const [workSubmitted, setWorkSubmitted] = useState(false);
-  const [bookmarked, setBookmarked] = useState(false);
+
 
   useEffect(() => {
     fetchJobDetail();
@@ -37,26 +37,10 @@ const JobDetail = () => {
       loadUserCredits();
       checkIfApplied();
       checkWorkSubmission();
-      checkBookmarkStatus();
     }
   }, [jobId, currentUser]);
 
-  const checkBookmarkStatus = async () => {
-    if (currentUser && jobId) {
-      const status = await isBookmarked(jobId, 'job');
-      setBookmarked(status);
-    }
-  };
 
-  const handleBookmark = async () => {
-    if (!currentUser || !job) return;
-    const result = await bookmarkPost(jobId, 'job', {
-      title: job.title,
-      description: job.description,
-      userId: job.userId
-    });
-    setBookmarked(result);
-  };
 
   const handleShare = () => {
     const shareUrl = window.location.href;
@@ -521,17 +505,6 @@ ${message}`,
 
               {/* Additional Actions */}
               <div className="flex gap-2">
-                <button 
-                  onClick={handleBookmark}
-                  className={`flex-1 py-3 rounded-xl transition flex items-center justify-center gap-2 ${
-                    bookmarked 
-                      ? 'bg-purple-600/20 border border-purple-500 text-purple-400' 
-                      : 'bg-[#2a2a2a] hover:bg-[#3a3a3a]'
-                  }`}
-                  title={bookmarked ? 'ยกเลิกการบันทึก' : 'บันทึก'}
-                >
-                  <Bookmark size={18} fill={bookmarked ? 'currentColor' : 'none'} />
-                </button>
                 <button 
                   onClick={handleShare}
                   className="flex-1 py-3 rounded-xl bg-[#2a2a2a] hover:bg-[#3a3a3a] transition flex items-center justify-center gap-2"

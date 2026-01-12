@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Eye, Heart, Calendar, Edit, Trash2, Bookmark } from 'lucide-react';
+import { Eye, Heart, Calendar, Edit, Trash2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocial } from '../contexts/SocialContext';
 import SocialActions from '../components/SocialActions';
@@ -16,11 +16,11 @@ import { th } from 'date-fns/locale';
 const ArtworkDetail = () => {
   const { artworkId } = useParams();
   const { currentUser } = useAuth();
-  const { incrementView, bookmarkPost, isBookmarked } = useSocial();
+  const { incrementView } = useSocial();
   
   const [artwork, setArtwork] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [bookmarked, setBookmarked] = useState(false);
+
   const [viewCount, setViewCount] = useState(0);
   const [likeCount, setLikeCount] = useState(0);
   const [showComments, setShowComments] = useState(false);
@@ -32,18 +32,7 @@ const ArtworkDetail = () => {
     }
   }, [artworkId]);
 
-  useEffect(() => {
-    if (artworkId && currentUser) {
-      checkBookmarkStatus();
-    }
-  }, [artworkId, currentUser]);
 
-  const checkBookmarkStatus = async () => {
-    if (currentUser && artworkId) {
-      const status = await isBookmarked(artworkId, 'artwork');
-      setBookmarked(status);
-    }
-  };
 
   const fetchArtworkDetail = async () => {
     setLoading(true);
@@ -76,18 +65,7 @@ const ArtworkDetail = () => {
     }
   };
 
-  const handleBookmark = async () => {
-    if (!currentUser || !artwork) return;
-    const result = await bookmarkPost(artworkId, 'artwork', {
-      title: artwork.title,
-      imageUrl: artwork.imageUrl || artwork.image,
-      artistId: artwork.artistId
-    });
-    setBookmarked(result);
-    // รีเฟรชสถานะการบันทึก
-    const status = await isBookmarked(artworkId, 'artwork');
-    setBookmarked(status);
-  };
+
 
   const handleDelete = async () => {
     if (!currentUser || artwork.artistId !== currentUser.uid) {
@@ -277,17 +255,6 @@ const ArtworkDetail = () => {
                 postType="artwork"
                 onCommentClick={() => setShowComments(true)}
               />
-              <button
-                onClick={handleBookmark}
-                className={`mt-4 w-full py-3 rounded-lg border transition flex items-center justify-center gap-2 ${
-                  bookmarked 
-                    ? 'bg-purple-600/20 border-purple-500 text-purple-400' 
-                    : 'bg-transparent border-[#3a3a3a] text-gray-400 hover:bg-[#2a2a2a]'
-                }`}
-              >
-                <Bookmark size={20} fill={bookmarked ? "currentColor" : "none"} />
-                {bookmarked ? 'ยกเลิกการบันทึก' : 'บันทึกรายการโปรด'}
-              </button>
             </div>
 
             {/* Comments Section */}

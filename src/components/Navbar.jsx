@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCredit } from '../contexts/CreditContext';
-import { Home, BookOpen, Palette, Briefcase, Compass, Search, Bell, User, LogOut, Settings, ShoppingBag, MessageCircle, Coins, Package, Receipt, FileText, Shield, Bookmark, BarChart3 } from 'lucide-react';
+import { Home, BookOpen, Palette, Briefcase, Compass, Search, Bell, User, LogOut, Settings, ShoppingBag, MessageCircle, Coins, Package, Receipt, FileText, Shield, BarChart3 } from 'lucide-react';
 import { useState } from 'react';
 import { useNotification } from '../contexts/NotificationContext';
 import NotificationPanel from './NotificationPanel';
@@ -208,14 +208,7 @@ export default function Navbar() {
                         <User size={18} />
                         <span>{t[lang].profile}</span>
                       </Link>
-                      <Link
-                        to="/bookmarks"
-                        className="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-[#2a2a2a] hover:text-white transition-colors"
-                        onClick={() => setShowUserMenu(false)}
-                      >
-                        <Bookmark size={18} />
-                        <span>รายการที่บันทึก</span>
-                      </Link>
+
                       <Link
                         to="/dashboard"
                         className="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-[#2a2a2a] hover:text-white transition-colors"
