@@ -220,7 +220,7 @@ export const SocialProvider = ({ children }) => {
     }
   };
 
-  // ========== BOOKMARK SYSTEM (Firestore) ==========
+  // ========== BOOKMARK SYSTEM (Realtime Database) ==========
   const bookmarkPost = async (postId, postType = 'artwork', postData = {}) => {
     if (!currentUser) {
       toast.error('กรุณาเข้าสู่ระบบเพื่อบันทึก');
@@ -228,22 +228,22 @@ export const SocialProvider = ({ children }) => {
     }
 
     try {
-      const bookmarkDocId = `${postType}_${postId}`;
-      const bookmarkRef = doc(db, `users/${currentUser.uid}/bookmarks`, bookmarkDocId);
-      const snapshot = await getDoc(bookmarkRef);
+      const bookmarkId = `${postType}_${postId}`;
+      const bookmarkRef = ref(realtimeDb, `bookmarks/${currentUser.uid}/${bookmarkId}`);
+      const snapshot = await get(bookmarkRef);
 
       if (snapshot.exists()) {
         // ลบบันทึก
-        await deleteDoc(bookmarkRef);
+        await set(bookmarkRef, null);
         toast.success('ลบออกจากรายการบันทึกแล้ว');
         return false;
       } else {
         // เพิ่มบันทึก
-        await setDoc(bookmarkRef, {
+        await set(bookmarkRef, {
           postId,
           postType,
           ...postData,
-          createdAt: serverTimestamp()
+          createdAt: Date.now()
         });
         toast.success('บันทึกเรียบร้อยแล้ว');
         return true;
@@ -258,9 +258,9 @@ export const SocialProvider = ({ children }) => {
   const isBookmarked = async (postId, postType = 'artwork') => {
     if (!currentUser) return false;
     try {
-      const bookmarkDocId = `${postType}_${postId}`;
-      const bookmarkRef = doc(db, `users/${currentUser.uid}/bookmarks`, bookmarkDocId);
-      const snapshot = await getDoc(bookmarkRef);
+      const bookmarkId = `${postType}_${postId}`;
+      const bookmarkRef = ref(realtimeDb, `bookmarks/${currentUser.uid}/${bookmarkId}`);
+      const snapshot = await get(bookmarkRef);
       return snapshot.exists();
     } catch (error) {
       return false;
@@ -270,27 +270,23 @@ export const SocialProvider = ({ children }) => {
   const getBookmarks = async (postType = null) => {
     if (!currentUser) return [];
     try {
-      const bookmarksRef = collection(db, `users/${currentUser.uid}/bookmarks`);
-      let q;
+      const bookmarksRef = ref(realtimeDb, `bookmarks/${currentUser.uid}`);
+      const snapshot = await get(bookmarksRef);
       
-      if (postType) {
-        q = query(bookmarksRef, where('postType', '==', postType));
-      } else {
-        q = query(bookmarksRef);
-      }
+      if (!snapshot.exists()) return [];
       
-      const snapshot = await getDocs(q);
-      const bookmarks = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
+      let bookmarks = Object.entries(snapshot.val()).map(([key, data]) => ({
+        id: key,
+        ...data
       }));
       
+      // ถ้ามี postType ให้กรองเฉพาะประเภทนั้น
+      if (postType) {
+        bookmarks = bookmarks.filter(b => b.postType === postType);
+      }
+      
       // เรียงตามวันที่สร้างใหม่สุดก่อน
-      return bookmarks.sort((a, b) => {
-        const aTime = a.createdAt?.toDate?.()?.getTime() || 0;
-        const bTime = b.createdAt?.toDate?.()?.getTime() || 0;
-        return bTime - aTime;
-      });
+      return bookmarks.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
     } catch (error) {
       console.error('Error getting bookmarks:', error);
       return [];
