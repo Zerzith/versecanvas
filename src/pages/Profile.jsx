@@ -216,18 +216,29 @@ export default function Profile() {
                   <h1 className="text-3xl font-bold mb-2">{profile.displayName || 'ไม่ระบุชื่อ'}</h1>
                   <p className="text-gray-400">{profile.role === 'artist' ? '🎨 ศิลปิน' : '👤 ผู้ใช้งาน'}</p>
                 </div>
-                {isOwnProfile && (
-                  <button
-                    onClick={() => setIsEditing(!isEditing)}
-                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition flex items-center gap-2"
-                  >
-                    <Edit size={16} />
-                    {isEditing ? 'ยกเลิก' : 'แก้ไข'}
-                  </button>
-                )}
-                {!isOwnProfile && currentUser && (
-                  <FollowButton userId={targetUserId} />
-                )}
+                <div className="flex gap-2">
+                  {isOwnProfile && (
+                    <button
+                      onClick={() => setIsEditing(!isEditing)}
+                      className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition flex items-center gap-2"
+                    >
+                      <Edit size={16} />
+                      {isEditing ? 'ยกเลิก' : 'แก้ไข'}
+                    </button>
+                  )}
+                  {!isOwnProfile && currentUser && (
+                    <>
+                      <button
+                        onClick={() => navigate(`/messages/${targetUserId}`)}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition flex items-center gap-2"
+                      >
+                        <MessageCircle size={16} />
+                        ส่งข้อความ
+                      </button>
+                      <FollowButton userId={targetUserId} />
+                    </>
+                  )}
+                </div>
               </div>
 
               {!isEditing ? (
