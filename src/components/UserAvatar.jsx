@@ -32,7 +32,16 @@ export default function UserAvatar({ userId, className = "w-10 h-10", showName =
   }
 
   const displayName = profile?.displayName || 'Anonymous';
-  const photoURL = profile?.photoURL || '/default-avatar.png';
+  
+  // Generate random avatar based on userId
+  const getDefaultAvatar = (userId) => {
+    if (!userId) return '/default-avatar-1.png';
+    const hash = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const avatarNumber = (hash % 3) + 1;
+    return `/default-avatar-${avatarNumber}.png`;
+  };
+  
+  const photoURL = profile?.photoURL || getDefaultAvatar(userId);
 
   return (
     <div className="flex items-center gap-3">

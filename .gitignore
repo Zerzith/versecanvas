@@ -57,3 +57,5 @@ ui-debug.log
 
 # TypeScript
 *.tsbuildinfo
+serviceAccountKey.json
+create-admin.cjs
