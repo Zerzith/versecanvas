@@ -30,7 +30,7 @@ export default function ContentManagement() {
     } else {
       setFilteredContent(content);
     }
-  }, [searchTerm, activeTab, stories, artworks]);
+  }, [searchTerm, activeTab, stories, artworks, products]);
 
   const fetchContent = async () => {
     try {
@@ -193,7 +193,8 @@ export default function ContentManagement() {
         ));
       }
 
-      toast.success(`${currentStatus ? 'แสดง' : 'ซ่อน'}เนื้อหาสำเร็จ!');
+      const statusText = currentStatus ? 'แสดง' : 'ซ่อน';
+      toast.success(statusText + 'เนื้อหาสำเร็จ!');
     } catch (error) {
       console.error('Error toggling visibility:', error);
       toast.error('เกิดข้อผิดพลาด: ' + error.message);
@@ -221,33 +222,21 @@ export default function ContentManagement() {
         <div className="flex gap-4 mb-6">
           <button
             onClick={() => setActiveTab('stories')}
-            className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-colors ${
-              activeTab === 'stories'
-                ? 'bg-purple-600 text-white'
-                : 'bg-[#1a1a1a] text-gray-400 hover:text-white border border-[#2a2a2a]'
-            }`}
+            className={'flex items-center gap-2 px-6 py-3 rounded-lg transition-colors ' + (activeTab === 'stories' ? 'bg-purple-600 text-white' : 'bg-[#1a1a1a] text-gray-400 hover:text-white border border-[#2a2a2a]')}
           >
             <BookOpen size={20} />
             <span>นิยาย ({stories.length})</span>
           </button>
           <button
             onClick={() => setActiveTab('artworks')}
-            className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-colors ${
-              activeTab === 'artworks'
-                ? 'bg-purple-600 text-white'
-                : 'bg-[#1a1a1a] text-gray-400 hover:text-white border border-[#2a2a2a]'
-            }`}
+            className={'flex items-center gap-2 px-6 py-3 rounded-lg transition-colors ' + (activeTab === 'artworks' ? 'bg-purple-600 text-white' : 'bg-[#1a1a1a] text-gray-400 hover:text-white border border-[#2a2a2a]')}
           >
             <Palette size={20} />
             <span>ผลงานศิลปะ ({artworks.length})</span>
           </button>
           <button
             onClick={() => setActiveTab('products')}
-            className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-colors ${
-              activeTab === 'products'
-                ? 'bg-purple-600 text-white'
-                : 'bg-[#1a1a1a] text-gray-400 hover:text-white border border-[#2a2a2a]'
-            }`}
+            className={'flex items-center gap-2 px-6 py-3 rounded-lg transition-colors ' + (activeTab === 'products' ? 'bg-purple-600 text-white' : 'bg-[#1a1a1a] text-gray-400 hover:text-white border border-[#2a2a2a]')}
           >
             <ShoppingBag size={20} />
             <span>สินค้า ({products.length})</span>
@@ -260,7 +249,7 @@ export default function ContentManagement() {
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
               type="text"
-              placeholder={`ค้นหา${activeTab === 'stories' ? 'นิยาย' : activeTab === 'artworks' ? 'ผลงาน' : 'สินค้า'}...`}
+              placeholder={'ค้นหา' + (activeTab === 'stories' ? 'นิยาย' : activeTab === 'artworks' ? 'ผลงาน' : 'สินค้า') + '...'}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-12 pr-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
@@ -332,7 +321,7 @@ export default function ContentManagement() {
                       <div className="flex items-center justify-end gap-2">
                         {activeTab !== 'products' && (
                           <Link
-                            to={activeTab === 'stories' ? `/story/${item.id}` : `/artwork/${item.id}`}
+                            to={activeTab === 'stories' ? '/story/' + item.id : '/artwork/' + item.id}
                             className="p-2 hover:bg-[#2a2a2a] rounded-lg transition-colors text-blue-400 hover:text-blue-300"
                             title="ดู"
                           >
