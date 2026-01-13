@@ -260,49 +260,68 @@ export default function EditStory() {
 
           <div className="bg-[#1a1a1a] rounded-2xl p-6 border border-[#2a2a2a]">
             <label className="block text-sm text-gray-400 mb-3">ปก</label>
-            <div className="flex items-center gap-4">
-              {(coverImage || story?.coverImage) && (
-                <div className="relative">
+            <div className="flex flex-col items-center">
+              {(coverImage || story?.coverImage) ? (
+                <div className="relative w-full max-w-md rounded-lg overflow-hidden border-2 border-[#2a2a2a] mb-4">
                   <img
                     src={coverImage || story.coverImage}
-                    alt="Cover"
-                    className="w-24 h-32 object-cover rounded-lg"
+                    alt="Cover preview"
+                    className="w-full h-auto object-contain max-h-96"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setCoverImage(null)}
+                    className="absolute top-4 right-4 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 shadow-lg"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                   {coverImage && (
-                    <span className="absolute top-1 right-1 bg-green-500 text-white text-xs px-2 py-0.5 rounded">
-                      ใหม่
+                    <span className="absolute top-4 left-4 bg-green-500 text-white text-xs px-3 py-1 rounded-full shadow-lg">
+                      รูปใหม่
                     </span>
                   )}
                 </div>
-              )}
-              <label className="flex-1">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleCoverUpload}
-                  disabled={uploading}
-                  className="hidden"
-                />
-                <div className="px-4 py-3 rounded-xl bg-[#2a2a2a] border border-[#3a3a3a] hover:border-purple-500 transition cursor-pointer flex items-center gap-2">
-                  <Upload size={18} />
-                  {uploading ? 'กำลังอัปโหลด...' : (coverImage ? 'เปลี่ยนรูปปก' : 'เลือกรูปปก')}
-                </div>
-              </label>
-              {coverImage && (
-                <button
-                  onClick={() => setCoverImage(null)}
-                  className="px-4 py-3 rounded-xl bg-red-600 hover:bg-red-700 transition flex items-center gap-2"
+              ) : (
+                <div 
+                  className="w-full max-w-md h-64 rounded-lg border-2 border-dashed border-[#2a2a2a] flex flex-col items-center justify-center bg-[#0f0f0f] mb-4 cursor-pointer hover:border-purple-500 transition-colors"
+                  onClick={() => document.getElementById('cover-upload-input').click()}
                 >
-                  <X size={18} />
-                  ยกเลิก
+                  <Upload className="w-16 h-16 text-gray-400 mb-4" />
+                  <p className="text-gray-400 font-medium mb-2">
+                    คลิกเพื่ออัปโหลดรูปปก
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    รองรับ JPG, PNG, GIF (สูงสุด 10MB)
+                  </p>
+                </div>
+              )}
+              <input
+                id="cover-upload-input"
+                type="file"
+                accept="image/*"
+                onChange={handleCoverUpload}
+                disabled={uploading}
+                className="hidden"
+              />
+              {!(coverImage || story?.coverImage) && (
+                <button
+                  type="button"
+                  onClick={() => document.getElementById('cover-upload-input').click()}
+                  disabled={uploading}
+                  className="px-6 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 transition flex items-center gap-2 disabled:opacity-50"
+                >
+                  <Upload size={18} />
+                  {uploading ? 'กำลังอัปโหลด...' : 'เลือกรูปปก'}
                 </button>
               )}
+              {coverImage && (
+                <p className="text-xs text-green-400 mt-2">
+                  ✓ รูปปกใหม่พร้อมบันทึก กดปุ่มบันทึกเพื่อเปลี่ยนปก
+                </p>
+              )}
             </div>
-            {coverImage && (
-              <p className="text-xs text-green-400 mt-2">
-                ✓ รูปปกใหม่พร้อมบันทึก กดปุ่มบันทึกเพื่อเปลี่ยนปก
-              </p>
-            )}
           </div>
 
           <div className="bg-[#1a1a1a] rounded-2xl p-6 border border-[#2a2a2a]">
