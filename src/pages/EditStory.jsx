@@ -305,17 +305,15 @@ export default function EditStory() {
                 disabled={uploading}
                 className="hidden"
               />
-              {!(coverImage || story?.coverImage) && (
-                <button
-                  type="button"
-                  onClick={() => document.getElementById('cover-upload-input').click()}
-                  disabled={uploading}
-                  className="px-6 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 transition flex items-center gap-2 disabled:opacity-50"
-                >
-                  <Upload size={18} />
-                  {uploading ? 'กำลังอัปโหลด...' : 'เลือกรูปปก'}
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => document.getElementById('cover-upload-input').click()}
+                disabled={uploading}
+                className="px-6 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 transition flex items-center gap-2 disabled:opacity-50"
+              >
+                <Upload size={18} />
+                {uploading ? 'กำลังอัปโหลด...' : ((coverImage || story?.coverImage) ? 'เปลี่ยนรูปปก' : 'เลือกรูปปก')}
+              </button>
               {coverImage && (
                 <p className="text-xs text-green-400 mt-2">
                   ✓ รูปปกใหม่พร้อมบันทึก กดปุ่มบันทึกเพื่อเปลี่ยนปก
