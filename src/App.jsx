@@ -46,6 +46,14 @@ import ArtworkDetail from './pages/ArtworkDetail';
 import UploadArtwork from './pages/UploadArtwork';
 import Withdraw from './pages/Withdraw';
 import AdminWithdrawals from './pages/AdminWithdrawals';
+import AdminRoute from './components/AdminRoute';
+import AdminLayout from './components/AdminLayout';
+import AdminDashboardNew from './pages/admin/Dashboard';
+import UserManagement from './pages/admin/UserManagement';
+import ContentManagement from './pages/admin/ContentManagement';
+import TransactionManagement from './pages/admin/TransactionManagement';
+import Reports from './pages/admin/Reports';
+import Analytics from './pages/admin/Analytics';
 import ProtectedContent from './components/ProtectedContent';
 import './App.css';
 import './protected.css';
@@ -90,7 +98,16 @@ function App() {
                           <Route path="/artseek" element={<Artseek currentLanguage={currentLanguage} />} />
                           <Route path="/job/:jobId" element={<JobDetail currentLanguage={currentLanguage} />} />
                           <Route path="/create-job" element={<CreateJob currentLanguage={currentLanguage} />} />
-                          <Route path="/admin" element={<AdminDashboard currentLanguage={currentLanguage} />} />
+                          {/* New Admin Routes */}
+                          <Route path="/admin" element={<AdminRoute><AdminLayout><AdminDashboardNew /></AdminLayout></AdminRoute>} />
+                          <Route path="/admin/users" element={<AdminRoute><AdminLayout><UserManagement /></AdminLayout></AdminRoute>} />
+                          <Route path="/admin/content" element={<AdminRoute><AdminLayout><ContentManagement /></AdminLayout></AdminRoute>} />
+                          <Route path="/admin/transactions" element={<AdminRoute><AdminLayout><TransactionManagement /></AdminLayout></AdminRoute>} />
+                          <Route path="/admin/reports" element={<AdminRoute><AdminLayout><Reports /></AdminLayout></AdminRoute>} />
+                          <Route path="/admin/analytics" element={<AdminRoute><AdminLayout><Analytics /></AdminLayout></AdminRoute>} />
+                          
+                          {/* Old Admin Routes */}
+                          <Route path="/admin/old" element={<AdminDashboard currentLanguage={currentLanguage} />} />
                           <Route path="/admin/withdrawals" element={<AdminWithdrawals currentLanguage={currentLanguage} />} />
                           <Route path="/profile/:userId" element={<Profile currentLanguage={currentLanguage} />} />
                           <Route path="/profile" element={<Profile currentLanguage={currentLanguage} />} />
