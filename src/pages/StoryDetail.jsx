@@ -128,16 +128,42 @@ const StoryDetail = () => {
 
     setPurchasing(true);
     try {
+      // หักเครดิตจากผู้ซื้อ
       await deductCredits(chapter.price, `ซื้อตอน: ${chapter.title}`);
       
+      // บันทึกการซื้อ
       await addDoc(collection(db, 'chapterPurchases'), {
         userId: currentUser.uid,
         storyId: storyId,
         chapterId: chapter.id,
         chapterTitle: chapter.title,
+        authorId: story.authorId,
         price: chapter.price,
         purchasedAt: serverTimestamp()
       });
+
+      // โอนเครดิตให้เจ้าของนิยาย
+      const authorRef = doc(db, 'users', story.authorId);
+      const authorDoc = await getDoc(authorRef);
+      
+      if (authorDoc.exists()) {
+        const currentCredits = authorDoc.data().credits || 0;
+        await updateDoc(authorRef, {
+          credits: currentCredits + chapter.price
+        });
+
+        // บันทึกธุรกรรมรายได้ของเจ้าของ
+        await addDoc(collection(db, 'transactions'), {
+          userId: story.authorId,
+          type: 'income',
+          amount: chapter.price,
+          description: `รายได้จากการขายตอน: ${chapter.title}`,
+          fromUserId: currentUser.uid,
+          storyId: storyId,
+          chapterId: chapter.id,
+          timestamp: serverTimestamp()
+        });
+      }
 
       setPurchasedChapters([...purchasedChapters, chapter.id]);
       setSelectedChapter(chapter);
