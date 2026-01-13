@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { collection, getDocs, doc, deleteDoc, query, orderBy, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { BookOpen, Palette, Search, Trash2, Eye, Edit, AlertCircle } from 'lucide-react';
+import { BookOpen, Palette, Search, Trash2, Eye, EyeOff } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 
 export default function ContentManagement() {
@@ -107,10 +108,10 @@ export default function ContentManagement() {
       // Delete story
       await deleteDoc(doc(db, 'stories', storyId));
       setStories(stories.filter(s => s.id !== storyId));
-      alert('ลบนิยายสำเร็จ!');
+      toast.success('ลบนิยายสำเร็จ!');
     } catch (error) {
       console.error('Error deleting story:', error);
-      alert('เกิดข้อผิดพลาดในการลบ');
+      toast.error('เกิดข้อผิดพลาดในการลบ: ' + error.message);
     }
   };
 
@@ -120,10 +121,10 @@ export default function ContentManagement() {
     try {
       await deleteDoc(doc(db, 'artworks', artworkId));
       setArtworks(artworks.filter(a => a.id !== artworkId));
-      alert('ลบผลงานสำเร็จ!');
+      toast.success('ลบผลงานสำเร็จ!');
     } catch (error) {
       console.error('Error deleting artwork:', error);
-      alert('เกิดข้อผิดพลาดในการลบ');
+      toast.error('เกิดข้อผิดพลาดในการลบ: ' + error.message);
     }
   };
 
@@ -146,10 +147,10 @@ export default function ContentManagement() {
         ));
       }
 
-      alert(`${currentStatus ? 'แสดง' : 'ซ่อน'}เนื้อหาสำเร็จ!`);
+      toast.success(`${currentStatus ? 'แสดง' : 'ซ่อน'}เนื้อหาสำเร็จ!');
     } catch (error) {
       console.error('Error toggling visibility:', error);
-      alert('เกิดข้อผิดพลาด');
+      toast.error('เกิดข้อผิดพลาด: ' + error.message);
     }
   };
 

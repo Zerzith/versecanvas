@@ -55,6 +55,7 @@ import TransactionManagement from './pages/admin/TransactionManagement';
 import Reports from './pages/admin/Reports';
 import Analytics from './pages/admin/Analytics';
 import AdminSettings from './pages/admin/Settings';
+import WithdrawalManagement from './pages/admin/WithdrawalManagement';
 import ProtectedContent from './components/ProtectedContent';
 import './App.css';
 import './protected.css';
@@ -107,10 +108,11 @@ function App() {
                           <Route path="/admin/reports" element={<AdminRoute><AdminLayout><Reports /></AdminLayout></AdminRoute>} />
                           <Route path="/admin/analytics" element={<AdminRoute><AdminLayout><Analytics /></AdminLayout></AdminRoute>} />
                           <Route path="/admin/settings" element={<AdminRoute><AdminLayout><AdminSettings /></AdminLayout></AdminRoute>} />
+                          <Route path="/admin/withdrawals" element={<AdminRoute><AdminLayout><WithdrawalManagement /></AdminLayout></AdminRoute>} />
                           
                           {/* Old Admin Routes */}
                           <Route path="/admin/old" element={<AdminDashboard currentLanguage={currentLanguage} />} />
-                          <Route path="/admin/withdrawals" element={<AdminWithdrawals currentLanguage={currentLanguage} />} />
+                          <Route path="/admin/withdrawals-old" element={<AdminWithdrawals currentLanguage={currentLanguage} />} />
                           <Route path="/profile/:userId" element={<Profile currentLanguage={currentLanguage} />} />
                           <Route path="/profile" element={<Profile currentLanguage={currentLanguage} />} />
                           <Route path="/settings" element={<Settings currentLanguage={currentLanguage} />} />

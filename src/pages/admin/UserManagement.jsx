@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
-import { collection, getDocs, doc, updateDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { 
-  Search, Edit, Trash2, Ban, CheckCircle, Shield, User, Mail, 
-  Calendar, Coins, MoreVertical, X
-} from 'lucide-react';
+import { Users, Search, Edit2, Trash2, Ban, Shield, User, Mail, Calendar, Coins, MoreVertical, X } from 'lucide-react';
+import toast from 'react-hot-toast';
 import UserAvatar from '../../components/UserAvatar';
 
 export default function UserManagement() {
@@ -87,10 +85,10 @@ export default function UserManagement() {
 
       setShowEditModal(false);
       setSelectedUser(null);
-      alert('บันทึกข้อมูลสำเร็จ!');
+      toast.success('บันทึกข้อมูลสำเร็จ!');
     } catch (error) {
       console.error('Error updating user:', error);
-      alert('เกิดข้อผิดพลาดในการบันทึก');
+      toast.error('เกิดข้อผิดพลาดในการบันทึก: ' + error.message);
     }
   };
 
@@ -110,10 +108,10 @@ export default function UserManagement() {
           : u
       ));
 
-      alert(`${currentBanStatus ? 'ปลดแบน' : 'แบน'}ผู้ใช้สำเร็จ!`);
+      toast.success(`${currentBanStatus ? 'ปลดแบน' : 'แบน'}ผู้ใช้สำเร็จ!');
     } catch (error) {
       console.error('Error banning user:', error);
-      alert('เกิดข้อผิดพลาด');
+      toast.error('เกิดข้อผิดพลาด: ' + error.message);
     }
   };
 
@@ -123,10 +121,10 @@ export default function UserManagement() {
     try {
       await deleteDoc(doc(db, 'users', userId));
       setUsers(users.filter(u => u.id !== userId));
-      alert('ลบผู้ใช้สำเร็จ!');
+      toast.success('ลบผู้ใช้สำเร็จ!');
     } catch (error) {
       console.error('Error deleting user:', error);
-      alert('เกิดข้อผิดพลาดในการลบ');
+      toast.error('เกิดข้อผิดพลาดในการลบ: ' + error.message);
     }
   };
 

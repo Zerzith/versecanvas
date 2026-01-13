@@ -14,6 +14,7 @@ export default function AdminLayout({ children }) {
     { path: '/admin/users', icon: Users, label: 'จัดการผู้ใช้' },
     { path: '/admin/content', icon: BookOpen, label: 'จัดการเนื้อหา' },
     { path: '/admin/transactions', icon: DollarSign, label: 'ธุรกรรม' },
+    { path: '/admin/withdrawals', icon: DollarSign, label: 'อนุมัติถอนเงิน' },
     { path: '/admin/reports', icon: AlertCircle, label: 'รายงาน' },
     { path: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
     { path: '/admin/settings', icon: Settings, label: 'ตั้งค่า' },
