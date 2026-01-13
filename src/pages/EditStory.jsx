@@ -22,6 +22,7 @@ export default function EditStory() {
   });
   const [newTag, setNewTag] = useState('');
   const [coverImage, setCoverImage] = useState(null);
+  const [coverFile, setCoverFile] = useState(null);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
@@ -67,20 +68,19 @@ export default function EditStory() {
     }
   };
 
-  const handleCoverUpload = async (e) => {
+  const handleCoverUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    setUploading(true);
-    try {
-      const imageUrl = await uploadImage(file);
-      setCoverImage(imageUrl);
-    } catch (error) {
-      console.error('Error uploading cover:', error);
-      alert('เกิดข้อผิดพลาดในการอัปโหลดรูป');
-    } finally {
-      setUploading(false);
-    }
+    setCoverImage(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      // Create preview URL for display
+      const previewUrl = reader.result;
+      // Store both file and preview
+      setCoverImage(previewUrl);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleDelete = async () => {
@@ -124,7 +124,12 @@ export default function EditStory() {
         updatedAt: serverTimestamp()
       };
 
-      if (coverImage) {
+      // If coverImage is a data URL (new upload), keep it
+      // It's already a base64 string that can be stored
+      if (coverImage && coverImage.startsWith('data:')) {
+        updateData.coverImage = coverImage;
+      } else if (coverImage) {
+        // If it's an existing URL, keep it
         updateData.coverImage = coverImage;
       }
 
