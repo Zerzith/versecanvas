@@ -93,9 +93,9 @@ const ArtworkDetail = () => {
       try {
         // Soft delete: เพิ่ม flag deleted แทนการลบจริง
         await updateDoc(doc(db, 'artworks', artworkId), {
-          deleted: true,
-          deletedAt: new Date(),
-          deletedBy: currentUser.uid
+          hidden: true,
+          hiddenAt: new Date(),
+          hiddenBy: currentUser.uid
         });
         alert('ซ่อนผลงานสำเร็จ! (ข้อมูลยังอยู่ในระบบ)');
         window.location.href = '/artworks';

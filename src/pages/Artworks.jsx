@@ -66,16 +66,16 @@ const Artworks = ({ currentLanguage }) => {
       if (sortBy === 'popular') {
         q = query(
           collection(db, 'artworks'), 
-          where('deleted', '!=', true),
-          orderBy('deleted'),
+          where('hidden', '!=', true),
+          orderBy('hidden'),
           orderBy('createdAt', 'desc'), 
           limit(50)
         );
       } else {
         q = query(
           collection(db, 'artworks'), 
-          where('deleted', '!=', true),
-          orderBy('deleted'),
+          where('hidden', '!=', true),
+          orderBy('hidden'),
           orderBy('createdAt', 'desc'), 
           limit(50)
         );

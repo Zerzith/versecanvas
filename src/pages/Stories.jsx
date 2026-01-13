@@ -44,11 +44,11 @@ const Stories = () => {
   const fetchStories = async () => {
     setLoading(true);
     try {
-      // กรอง stories ที่ไม่ถูกซ่อน (deleted != true)
+      // กรอง stories ที่ไม่ถูกซ่อน (hidden != true)
       const q = query(
         collection(db, 'stories'), 
-        where('deleted', '!=', true),
-        orderBy('deleted'),
+        where('hidden', '!=', true),
+        orderBy('hidden'),
         orderBy('createdAt', 'desc')
       );
       const querySnapshot = await getDocs(q);

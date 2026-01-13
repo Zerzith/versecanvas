@@ -210,12 +210,12 @@ const StoryDetail = () => {
     try {
       // Soft delete: เพิ่ม flag deleted แทนการลบจริง
       await updateDoc(doc(db, 'stories', storyId), {
-        deleted: true,
-        deletedAt: new Date(),
-        deletedBy: currentUser.uid
+        hidden: true,
+        hiddenAt: new Date(),
+        hiddenBy: currentUser.uid
       });
 
-      alert('ซ่อนเรื่องสำเร็จ! (ข้อมูลยังอยู่ในระบบ)');
+      alert('ซ่อนเรื่องสำเร็จ!');
       navigate('/stories');
     } catch (error) {
       console.error('Error hiding story:', error);
