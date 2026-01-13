@@ -54,6 +54,7 @@ import ContentManagement from './pages/admin/ContentManagement';
 import TransactionManagement from './pages/admin/TransactionManagement';
 import Reports from './pages/admin/Reports';
 import Analytics from './pages/admin/Analytics';
+import AdminSettings from './pages/admin/Settings';
 import ProtectedContent from './components/ProtectedContent';
 import './App.css';
 import './protected.css';
@@ -105,6 +106,7 @@ function App() {
                           <Route path="/admin/transactions" element={<AdminRoute><AdminLayout><TransactionManagement /></AdminLayout></AdminRoute>} />
                           <Route path="/admin/reports" element={<AdminRoute><AdminLayout><Reports /></AdminLayout></AdminRoute>} />
                           <Route path="/admin/analytics" element={<AdminRoute><AdminLayout><Analytics /></AdminLayout></AdminRoute>} />
+                          <Route path="/admin/settings" element={<AdminRoute><AdminLayout><AdminSettings /></AdminLayout></AdminRoute>} />
                           
                           {/* Old Admin Routes */}
                           <Route path="/admin/old" element={<AdminDashboard currentLanguage={currentLanguage} />} />
