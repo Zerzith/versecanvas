@@ -265,7 +265,7 @@ export default function EditStory() {
                 <div className="relative w-full max-w-md rounded-lg overflow-hidden border-2 border-[#2a2a2a] mb-4">
                   <img
                     src={coverImage || story.coverImage}
-                    alt="Cover preview"
+                    alt=""
                     className="w-full h-auto object-contain max-h-96"
                   />
                   <button
@@ -309,7 +309,7 @@ export default function EditStory() {
                 type="button"
                 onClick={() => document.getElementById('cover-upload-input').click()}
                 disabled={uploading}
-                className="px-6 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 transition flex items-center gap-2 disabled:opacity-50"
+                className="mt-4 px-6 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 transition flex items-center gap-2 disabled:opacity-50"
               >
                 <Upload size={18} />
                 {uploading ? 'กำลังอัปโหลด...' : ((coverImage || story?.coverImage) ? 'เปลี่ยนรูปปก' : 'เลือกรูปปก')}
