@@ -325,4 +325,3 @@ export default function ContentManagement() {
     </div>
   );
 }
-// Build trigger
