@@ -399,7 +399,7 @@ function ProductCard({ product, onPurchase, purchasing, featured = false, isOwne
             <Star size={16} fill="currentColor" />
             <span className="text-sm font-medium">{product.rating}</span>
           </div>
-          <span className="text-sm text-gray-400">{product.soldCount || 0} ขาย</span>
+          <span className="text-sm text-gray-400">{product.sales} ขาย</span>
         </div>
 
         {/* Price and Action */}
