@@ -303,8 +303,81 @@ export default function WithdrawalManagement() {
                   </div>
                 </div>
 
+                {/* Bank Account Info */}
+                {withdrawal.bankAccount && (
+                  <div className="bg-[#2a2a2a] rounded-lg p-4 mb-4">
+                    <h4 className="text-sm font-semibold text-gray-400 mb-3">ข้อมูลบัญชีธนาคาร</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">ชื่อบัญชี</p>
+                        <p className="text-sm text-white font-medium">{withdrawal.bankAccount.accountName || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">เลขบัญชี</p>
+                        <p className="text-sm text-white font-medium">{withdrawal.bankAccount.accountNumber || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">ธนาคาร</p>
+                        <p className="text-sm text-white font-medium">{withdrawal.bankAccount.bankName || 'N/A'}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {withdrawal.description && (
-                  <p className="text-gray-300 mb-4">{withdrawal.description}</p>
+                  <div className="mb-4">
+                    <p className="text-xs text-gray-500 mb-1">หมายเหตุ</p>
+                    <p className="text-gray-300 text-sm">{withdrawal.description}</p>
+                  </div>
+                )}
+
+                {/* Transaction History */}
+                {(withdrawal.status === 'approved' || withdrawal.status === 'rejected') && (
+                  <div className="bg-[#2a2a2a] rounded-lg p-4 mb-4">
+                    <h4 className="text-sm font-semibold text-gray-400 mb-3">ประวัติการทำรายการ</h4>
+                    <div className="space-y-2">
+                      {withdrawal.status === 'approved' && withdrawal.approvedAt && (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-400">วันที่อนุมัติ:</span>
+                          <span className="text-green-400">
+                            {withdrawal.approvedAt.toDate().toLocaleDateString('th-TH', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </span>
+                        </div>
+                      )}
+                      {withdrawal.status === 'approved' && withdrawal.approvedBy && (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-400">ผู้อนุมัติ:</span>
+                          <span className="text-white">{withdrawal.approvedBy}</span>
+                        </div>
+                      )}
+                      {withdrawal.status === 'rejected' && withdrawal.rejectedAt && (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-400">วันที่ปฏิเสธ:</span>
+                          <span className="text-red-400">
+                            {withdrawal.rejectedAt.toDate().toLocaleDateString('th-TH', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </span>
+                        </div>
+                      )}
+                      {withdrawal.status === 'rejected' && withdrawal.rejectedBy && (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-400">ผู้ปฏิเสธ:</span>
+                          <span className="text-white">{withdrawal.rejectedBy}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 )}
 
                 {withdrawal.rejectedReason && (

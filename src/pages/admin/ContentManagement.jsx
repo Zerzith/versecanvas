@@ -328,32 +328,29 @@ export default function ContentManagement() {
                             <Eye size={18} />
                           </Link>
                         )}
-                        <button
-                          onClick={() => handleToggleVisibility(
-                            item.id, 
-                            item.hidden, 
-                            activeTab === 'stories' ? 'story' : activeTab === 'artworks' ? 'artwork' : 'product'
-                          )}
-                          className="p-2 hover:bg-[#2a2a2a] rounded-lg transition-colors text-yellow-400 hover:text-yellow-300"
-                          title={item.hidden ? 'แสดง' : 'ซ่อน'}
-                        >
-                          {item.hidden ? <Eye size={18} /> : <EyeOff size={18} />}
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (activeTab === 'stories') {
-                              handleDeleteStory(item.id);
-                            } else if (activeTab === 'artworks') {
-                              handleDeleteArtwork(item.id);
-                            } else {
-                              handleDeleteProduct(item.id);
-                            }
-                          }}
-                          className="p-2 hover:bg-[#2a2a2a] rounded-lg transition-colors text-red-400 hover:text-red-300"
-                          title="ลบ"
-                        >
-                          <Trash2 size={18} />
-                        </button>
+                        {/* แสดงปุ่มซ่อน/ลบเฉพาะ Artworks */}
+                        {activeTab === 'artworks' && (
+                          <>
+                            <button
+                              onClick={() => handleToggleVisibility(
+                                item.id, 
+                                item.hidden, 
+                                'artwork'
+                              )}
+                              className="p-2 hover:bg-[#2a2a2a] rounded-lg transition-colors text-yellow-400 hover:text-yellow-300"
+                              title={item.hidden ? 'แสดง' : 'ซ่อน'}
+                            >
+                              {item.hidden ? <Eye size={18} /> : <EyeOff size={18} />}
+                            </button>
+                            <button
+                              onClick={() => handleDeleteArtwork(item.id)}
+                              className="p-2 hover:bg-[#2a2a2a] rounded-lg transition-colors text-red-400 hover:text-red-300"
+                              title="ลบ"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
