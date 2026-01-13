@@ -41,13 +41,18 @@ const CreateStory = ({ currentLanguage }) => {
       return;
     }
 
+    setError('');
     setCoverImage(file);
+    
+    // Create preview URL
     const reader = new FileReader();
-    reader.onloadend = () => {
-      setCoverImagePreview(reader.result);
+    reader.onload = (event) => {
+      setCoverImagePreview(event.target.result);
+    };
+    reader.onerror = () => {
+      setError(isThaiLanguage ? 'ไม่สามารถโหลดรูปได้' : 'Failed to load image');
     };
     reader.readAsDataURL(file);
-    setError('');
   };
 
   const handleSubmit = async (e) => {
