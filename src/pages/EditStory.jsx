@@ -261,12 +261,19 @@ export default function EditStory() {
           <div className="bg-[#1a1a1a] rounded-2xl p-6 border border-[#2a2a2a]">
             <label className="block text-sm text-gray-400 mb-3">ปก</label>
             <div className="flex items-center gap-4">
-              {story?.coverImage && (
-                <img
-                  src={story.coverImage}
-                  alt="Cover"
-                  className="w-24 h-32 object-cover rounded-lg"
-                />
+              {(coverImage || story?.coverImage) && (
+                <div className="relative">
+                  <img
+                    src={coverImage || story.coverImage}
+                    alt="Cover"
+                    className="w-24 h-32 object-cover rounded-lg"
+                  />
+                  {coverImage && (
+                    <span className="absolute top-1 right-1 bg-green-500 text-white text-xs px-2 py-0.5 rounded">
+                      ใหม่
+                    </span>
+                  )}
+                </div>
               )}
               <label className="flex-1">
                 <input
@@ -278,10 +285,24 @@ export default function EditStory() {
                 />
                 <div className="px-4 py-3 rounded-xl bg-[#2a2a2a] border border-[#3a3a3a] hover:border-purple-500 transition cursor-pointer flex items-center gap-2">
                   <Upload size={18} />
-                  {uploading ? 'กำลังอัปโหลด...' : 'เลือกรูปปก'}
+                  {uploading ? 'กำลังอัปโหลด...' : (coverImage ? 'เปลี่ยนรูปปก' : 'เลือกรูปปก')}
                 </div>
               </label>
+              {coverImage && (
+                <button
+                  onClick={() => setCoverImage(null)}
+                  className="px-4 py-3 rounded-xl bg-red-600 hover:bg-red-700 transition flex items-center gap-2"
+                >
+                  <X size={18} />
+                  ยกเลิก
+                </button>
+              )}
             </div>
+            {coverImage && (
+              <p className="text-xs text-green-400 mt-2">
+                ✓ รูปปกใหม่พร้อมบันทึก กดปุ่มบันทึกเพื่อเปลี่ยนปก
+              </p>
+            )}
           </div>
 
           <div className="bg-[#1a1a1a] rounded-2xl p-6 border border-[#2a2a2a]">
