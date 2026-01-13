@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { BookOpen, Eye, Heart, Clock, User, ChevronRight, MessageCircle, Share2, Edit, Trash2, Calendar } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocial } from '../contexts/SocialContext';
