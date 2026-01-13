@@ -208,22 +208,23 @@ const StoryDetail = () => {
 
     setDeleting(true);
     try {
+      // ลบ chapters ทีละตัวแทนการใช้ batch
       const chaptersRef = collection(db, 'stories', storyId, 'chapters');
       const chaptersSnapshot = await getDocs(chaptersRef);
       
-      const batch = writeBatch(db);
-      chaptersSnapshot.docs.forEach((doc) => {
-        batch.delete(doc.ref);
-      });
-      await batch.commit();
+      // ลบ chapters ทีละตัวเพื่อให้ Firestore rules ตรวจสอบสิทธิ์ได้
+      for (const chapterDoc of chaptersSnapshot.docs) {
+        await deleteDoc(chapterDoc.ref);
+      }
 
+      // ลบ story
       await deleteDoc(doc(db, 'stories', storyId));
 
       alert('ลบเรื่องสำเร็จ!');
       navigate('/stories');
     } catch (error) {
       console.error('Error deleting story:', error);
-      alert('เกิดข้อผิดพลาดในการลบเรื่อง');
+      alert('เกิดข้อผิดพลาดในการลบเรื่อง: ' + error.message);
     } finally {
       setDeleting(false);
     }
