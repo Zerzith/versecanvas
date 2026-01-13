@@ -55,7 +55,7 @@ import TransactionManagement from './pages/admin/TransactionManagement';
 
 import Analytics from './pages/admin/Analytics';
 import AdminSettings from './pages/admin/Settings';
-import WithdrawalManagement from './pages/admin/WithdrawalManagement';
+// import WithdrawalManagement from './pages/admin/WithdrawalManagement';
 import AdminJobManagement from './pages/admin/JobManagement';
 import ProtectedContent from './components/ProtectedContent';
 import './App.css';
@@ -110,7 +110,7 @@ function App() {
 
                           <Route path="/admin/analytics" element={<AdminRoute><AdminLayout><Analytics /></AdminLayout></AdminRoute>} />
                           <Route path="/admin/settings" element={<AdminRoute><AdminLayout><AdminSettings /></AdminLayout></AdminRoute>} />
-                          <Route path="/admin/withdrawals" element={<AdminRoute><AdminLayout><WithdrawalManagement /></AdminLayout></AdminRoute>} />
+                          <Route path="/admin/withdrawals" element={<AdminRoute><AdminLayout><AdminWithdrawals /></AdminLayout></AdminRoute>} />
                           
                           {/* Old Admin Routes */}
                           <Route path="/admin/old" element={<AdminDashboard currentLanguage={currentLanguage} />} />
