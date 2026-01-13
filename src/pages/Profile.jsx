@@ -156,8 +156,7 @@ export default function Profile() {
         <div className="flex flex-col md:flex-row items-center md:items-start gap-8 mb-12">
           {/* Avatar */}
           <div className="relative">
-            <div className="w-32 h-32 md:w-40 md:h-40 rounded-full p-1 bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600">
-              <div className="w-full h-full rounded-full border-4 border-[#0f0f0f] overflow-hidden relative group">
+            <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden relative group border-2 border-[#2a2a2a]">
                 <img 
                   src={profile.photoURL || `https://ui-avatars.com/api/?name=${profile.displayName}&background=random`} 
                   className="w-full h-full object-cover"
@@ -169,7 +168,6 @@ export default function Profile() {
                     <input type="file" className="hidden" accept="image/*" onChange={handleProfileImageUpload} disabled={uploading} />
                   </label>
                 )}
-              </div>
             </div>
             {uploading && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
