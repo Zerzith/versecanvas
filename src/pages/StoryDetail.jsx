@@ -208,19 +208,28 @@ const StoryDetail = () => {
 
     setDeleting(true);
     try {
-      // ลบ chapters ทีละตัวแทนการใช้ batch
-      const chaptersRef = collection(db, 'stories', storyId, 'chapters');
-      const chaptersSnapshot = await getDocs(chaptersRef);
-      
-      // ลบ chapters ทีละตัวเพื่อให้ Firestore rules ตรวจสอบสิทธิ์ได้
-      for (const chapterDoc of chaptersSnapshot.docs) {
-        await deleteDoc(chapterDoc.ref);
+      // ดึง Firebase ID Token
+      const idToken = await currentUser.getIdToken();
+
+      // เรียก API เพื่อลบ story (ใช้ Vercel Function ที่มี Admin SDK)
+      const response = await fetch('/api/delete-story', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          storyId: storyId,
+          idToken: idToken,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || result.message || 'เกิดข้อผิดพลาดในการลบ');
       }
 
-      // ลบ story
-      await deleteDoc(doc(db, 'stories', storyId));
-
-      alert('ลบเรื่องสำเร็จ!');
+      alert(`ลบเรื่องสำเร็จ! (ลบ ${result.deletedChapters} ตอน)`);
       navigate('/stories');
     } catch (error) {
       console.error('Error deleting story:', error);
