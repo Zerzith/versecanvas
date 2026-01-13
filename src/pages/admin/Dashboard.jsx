@@ -287,11 +287,11 @@ export default function AdminDashboard() {
                 color="green"
               />
               <QuickAction
-                to="/admin/reports"
-                icon={AlertCircle}
-                title="รายงาน"
-                description="ตรวจสอบรายงานจากผู้ใช้"
-                color="red"
+                to="/admin/jobs"
+                icon={Package}
+                title="จัดการงาน"
+                description="จัดการงาน Commission และ Freelance"
+                color="purple"
               />
             </div>
           </div>

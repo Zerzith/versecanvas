@@ -89,7 +89,9 @@ service cloud.firestore {
       // Chapters Subcollection
       match /chapters/{chapterId} {
         allow read: if true; // ทุกคนอ่านได้
-        allow write: if isSignedIn() || isAdmin(); // ผู้ที่ล็อกอินหรือแอดมินเขียนได้
+        allow create: if isSignedIn();
+        allow update: if isSignedIn() || isAdmin();
+        allow delete: if isSignedIn() || isAdmin(); // แอดมินสามารถลบ chapter ได้
       }
     }
     
