@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { collection, getDocs, query, orderBy, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { BookOpen, Palette, Search, Trash2, Eye, EyeOff } from 'lucide-react';
+import { BookOpen, Palette, Search, Trash2, Eye, EyeOff, ShoppingBag, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 
@@ -9,6 +9,7 @@ export default function ContentManagement() {
   const [activeTab, setActiveTab] = useState('stories');
   const [stories, setStories] = useState([]);
   const [artworks, setArtworks] = useState([]);
+  const [products, setProducts] = useState([]);
   const [filteredContent, setFilteredContent] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -18,7 +19,7 @@ export default function ContentManagement() {
   }, []);
 
   useEffect(() => {
-    const content = activeTab === 'stories' ? stories : artworks;
+    const content = activeTab === 'stories' ? stories : activeTab === 'artworks' ? artworks : products;
     if (searchTerm) {
       const filtered = content.filter(item => 
         item.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -89,6 +90,34 @@ export default function ContentManagement() {
       );
       setArtworks(artworksData);
 
+      // Fetch products
+      const productsQuery = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
+      const productsSnap = await getDocs(productsQuery);
+      const productsData = await Promise.all(
+        productsSnap.docs.map(async (docSnap) => {
+          const data = docSnap.data();
+          // Get creator name
+          let authorName = 'Unknown';
+          if (data.creatorId) {
+            try {
+              const authorDoc = await getDocs(query(collection(db, 'users')));
+              const author = authorDoc.docs.find(d => d.id === data.creatorId);
+              if (author) {
+                authorName = author.data().displayName || 'Unknown';
+              }
+            } catch (error) {
+              console.error('Error fetching creator:', error);
+            }
+          }
+          return {
+            id: docSnap.id,
+            ...data,
+            authorName
+          };
+        })
+      );
+      setProducts(productsData);
+
       setLoading(false);
     } catch (error) {
       console.error('Error fetching content:', error);
@@ -128,9 +157,22 @@ export default function ContentManagement() {
     }
   };
 
+  const handleDeleteProduct = async (productId) => {
+    if (!confirm('คุณต้องการลบสินค้านี้หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้!')) return;
+
+    try {
+      await deleteDoc(doc(db, 'products', productId));
+      setProducts(products.filter(p => p.id !== productId));
+      toast.success('ลบสินค้าสำเร็จ!');
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      toast.error('เกิดข้อผิดพลาดในการลบ: ' + error.message);
+    }
+  };
+
   const handleToggleVisibility = async (id, currentStatus, type) => {
     try {
-      const collectionName = type === 'story' ? 'stories' : 'artworks';
+      const collectionName = type === 'story' ? 'stories' : type === 'artwork' ? 'artworks' : 'products';
       const docRef = doc(db, collectionName, id);
       await updateDoc(docRef, {
         hidden: !currentStatus,
@@ -141,9 +183,13 @@ export default function ContentManagement() {
         setStories(stories.map(s => 
           s.id === id ? { ...s, hidden: !currentStatus } : s
         ));
-      } else {
+      } else if (type === 'artwork') {
         setArtworks(artworks.map(a => 
           a.id === id ? { ...a, hidden: !currentStatus } : a
+        ));
+      } else {
+        setProducts(products.map(p => 
+          p.id === id ? { ...p, hidden: !currentStatus } : p
         ));
       }
 
@@ -195,6 +241,17 @@ export default function ContentManagement() {
             <Palette size={20} />
             <span>ผลงานศิลปะ ({artworks.length})</span>
           </button>
+          <button
+            onClick={() => setActiveTab('products')}
+            className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-colors ${
+              activeTab === 'products'
+                ? 'bg-purple-600 text-white'
+                : 'bg-[#1a1a1a] text-gray-400 hover:text-white border border-[#2a2a2a]'
+            }`}
+          >
+            <ShoppingBag size={20} />
+            <span>สินค้า ({products.length})</span>
+          </button>
         </div>
 
         {/* Search Bar */}
@@ -203,7 +260,7 @@ export default function ContentManagement() {
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
               type="text"
-              placeholder={`ค้นหา${activeTab === 'stories' ? 'นิยาย' : 'ผลงาน'}...`}
+              placeholder={`ค้นหา${activeTab === 'stories' ? 'นิยาย' : activeTab === 'artworks' ? 'ผลงาน' : 'สินค้า'}...`}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-12 pr-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
@@ -218,7 +275,7 @@ export default function ContentManagement() {
               <thead className="bg-[#0a0a0a] border-b border-[#2a2a2a]">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    {activeTab === 'stories' ? 'นิยาย' : 'ผลงาน'}
+                    {activeTab === 'stories' ? 'นิยาย' : activeTab === 'artworks' ? 'ผลงาน' : 'สินค้า'}
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
                     ผู้สร้าง
@@ -273,30 +330,36 @@ export default function ContentManagement() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
-                        <Link
-                          to={activeTab === 'stories' ? `/story/${item.id}` : `/artwork/${item.id}`}
-                          className="p-2 hover:bg-[#2a2a2a] rounded-lg transition-colors text-blue-400 hover:text-blue-300"
-                          title="ดู"
-                        >
-                          <Eye size={18} />
-                        </Link>
+                        {activeTab !== 'products' && (
+                          <Link
+                            to={activeTab === 'stories' ? `/story/${item.id}` : `/artwork/${item.id}`}
+                            className="p-2 hover:bg-[#2a2a2a] rounded-lg transition-colors text-blue-400 hover:text-blue-300"
+                            title="ดู"
+                          >
+                            <Eye size={18} />
+                          </Link>
+                        )}
                         <button
                           onClick={() => handleToggleVisibility(
                             item.id, 
                             item.hidden, 
-                            activeTab === 'stories' ? 'story' : 'artwork'
+                            activeTab === 'stories' ? 'story' : activeTab === 'artworks' ? 'artwork' : 'product'
                           )}
                           className="p-2 hover:bg-[#2a2a2a] rounded-lg transition-colors text-yellow-400 hover:text-yellow-300"
                           title={item.hidden ? 'แสดง' : 'ซ่อน'}
                         >
-                          <AlertCircle size={18} />
+                          {item.hidden ? <Eye size={18} /> : <EyeOff size={18} />}
                         </button>
                         <button
-                          onClick={() => 
-                            activeTab === 'stories' 
-                              ? handleDeleteStory(item.id)
-                              : handleDeleteArtwork(item.id)
-                          }
+                          onClick={() => {
+                            if (activeTab === 'stories') {
+                              handleDeleteStory(item.id);
+                            } else if (activeTab === 'artworks') {
+                              handleDeleteArtwork(item.id);
+                            } else {
+                              handleDeleteProduct(item.id);
+                            }
+                          }}
                           className="p-2 hover:bg-[#2a2a2a] rounded-lg transition-colors text-red-400 hover:text-red-300"
                           title="ลบ"
                         >
@@ -314,8 +377,10 @@ export default function ContentManagement() {
             <div className="text-center py-12">
               {activeTab === 'stories' ? (
                 <BookOpen className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-              ) : (
+              ) : activeTab === 'artworks' ? (
                 <Palette className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+              ) : (
+                <ShoppingBag className="w-12 h-12 text-gray-600 mx-auto mb-3" />
               )}
               <p className="text-gray-400">ไม่พบเนื้อหา</p>
             </div>
