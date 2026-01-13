@@ -13,7 +13,9 @@ export default function AddChapter() {
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     title: '',
-    content: ''
+    content: '',
+    price: 0,
+    freeDate: ''
   });
 
   useEffect(() => {
@@ -87,7 +89,10 @@ export default function AddChapter() {
         updatedAt: serverTimestamp(),
         wordCount: wordCount,
         views: 0,
-        likes: 0
+        likes: 0,
+        price: parseInt(formData.price) || 0,
+        freeDate: formData.freeDate ? new Date(formData.freeDate) : null,
+        isPaid: parseInt(formData.price) > 0
       });
 
       // อัปเดตจำนวนตอนในเรื่อง
@@ -159,6 +164,35 @@ export default function AddChapter() {
             <p className="text-xs text-gray-500 mt-2">
               จำนวนคำ: {formData.content.split(/\s+/).filter(word => word.length > 0).length}
             </p>
+          </div>
+
+          {/* Pricing */}
+          <div className="bg-[#1a1a1a] rounded-2xl p-6 border border-[#2a2a2a]">
+            <label className="block text-sm text-gray-400 mb-3">ราคาตอน</label>
+            <select
+              value={formData.price}
+              onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+              className="w-full bg-[#2a2a2a] border border-[#3a3a3a] rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500"
+            >
+              <option value="0">ฟรี</option>
+              <option value="100">100 เครดิต</option>
+              <option value="200">200 เครดิต</option>
+              <option value="300">300 เครดิต</option>
+            </select>
+            {parseInt(formData.price) > 0 && (
+              <div className="mt-4">
+                <label className="block text-sm text-gray-400 mb-3">วันที่เปิดให้อ่านฟรี (เลือกได้)</label>
+                <input
+                  type="datetime-local"
+                  value={formData.freeDate}
+                  onChange={(e) => setFormData({ ...formData, freeDate: e.target.value })}
+                  className="w-full bg-[#2a2a2a] border border-[#3a3a3a] rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500"
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  ถ้าตั้งวันที่ ตอนนี้จะเปิดให้อ่านฟรีอัตโนมัติเมื่อถึงวันที่กำหนด
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Tips */}

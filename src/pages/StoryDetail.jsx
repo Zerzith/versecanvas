@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { BookOpen, Eye, Heart, Clock, User, ChevronRight, MessageCircle, Share2, Edit, Trash2, Calendar, Plus } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useCredit } from '../contexts/CreditContext';
 import { useSocial } from '../contexts/SocialContext';
 import SocialActions from '../components/SocialActions';
 import CommentSection from '../components/CommentSection';
 import FollowButton from '../components/FollowButton';
 import UserAvatar from '../components/UserAvatar';
-import { collection, query, orderBy, getDocs, getDoc, doc, deleteDoc, updateDoc, writeBatch } from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, getDoc, doc, deleteDoc, updateDoc, writeBatch, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
@@ -16,6 +17,7 @@ const StoryDetail = () => {
   const { storyId } = useParams();
   const navigate = useNavigate();
   const { currentUser } = useAuth();
+  const { credits, deductCredits } = useCredit();
   const { incrementView, getViewCount, getLikeCount } = useSocial();
   const [story, setStory] = useState(null);
   const [chapters, setChapters] = useState([]);
@@ -25,11 +27,16 @@ const StoryDetail = () => {
   const [viewCount, setViewCount] = useState(0);
   const [likeCount, setLikeCount] = useState(0);
   const [deleting, setDeleting] = useState(false);
+  const [purchasedChapters, setPurchasedChapters] = useState([]);
+  const [purchasing, setPurchasing] = useState(false);
 
   useEffect(() => {
     fetchStoryDetail();
     incrementView(storyId, 'story');
-  }, [storyId]);
+    if (currentUser) {
+      loadPurchasedChapters();
+    }
+  }, [storyId, currentUser]);
 
   useEffect(() => {
     if (storyId) {
@@ -68,7 +75,87 @@ const StoryDetail = () => {
     }
   };
 
+  const loadPurchasedChapters = async () => {
+    if (!currentUser) return;
+    try {
+      const q = query(
+        collection(db, 'chapterPurchases'),
+        where('userId', '==', currentUser.uid),
+        where('storyId', '==', storyId)
+      );
+      const snapshot = await getDocs(q);
+      const purchased = snapshot.docs.map(doc => doc.data().chapterId);
+      setPurchasedChapters(purchased);
+    } catch (error) {
+      console.error('Error loading purchased chapters:', error);
+    }
+  };
+
+  const isChapterFree = (chapter) => {
+    if (!chapter.price || chapter.price === 0) return true;
+    if (chapter.freeDate) {
+      const freeDate = chapter.freeDate.toDate ? chapter.freeDate.toDate() : new Date(chapter.freeDate);
+      return new Date() >= freeDate;
+    }
+    return false;
+  };
+
+  const canReadChapter = (chapter) => {
+    if (!currentUser) return false;
+    if (currentUser.uid === story?.authorId) return true;
+    if (isChapterFree(chapter)) return true;
+    return purchasedChapters.includes(chapter.id);
+  };
+
+  const handlePurchaseChapter = async (chapter) => {
+    if (!currentUser) {
+      alert('กรุณาเข้าสู่ระบบก่อนซื้อตอน');
+      navigate('/login');
+      return;
+    }
+
+    if (credits < chapter.price) {
+      if (confirm(`เครดิตของคุณไม่เพียงพอ (มี ${credits} ต้องการ ${chapter.price})
+ต้องการไปเติมเครดิตหรือไม่?`)) {
+        navigate('/credits');
+      }
+      return;
+    }
+
+    if (!confirm(`ซื้อตอน "${chapter.title}" ด้วย ${chapter.price} เครดิต?`)) {
+      return;
+    }
+
+    setPurchasing(true);
+    try {
+      await deductCredits(chapter.price, `ซื้อตอน: ${chapter.title}`);
+      
+      await addDoc(collection(db, 'chapterPurchases'), {
+        userId: currentUser.uid,
+        storyId: storyId,
+        chapterId: chapter.id,
+        chapterTitle: chapter.title,
+        price: chapter.price,
+        purchasedAt: serverTimestamp()
+      });
+
+      setPurchasedChapters([...purchasedChapters, chapter.id]);
+      setSelectedChapter(chapter);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      alert('ซื้อตอนสำเร็จ!');
+    } catch (error) {
+      console.error('Error purchasing chapter:', error);
+      alert('เกิดข้อผิดพลาดในการซื้อตอน');
+    } finally {
+      setPurchasing(false);
+    }
+  };
+
   const handleChapterClick = (chapter) => {
+    if (!canReadChapter(chapter)) {
+      handlePurchaseChapter(chapter);
+      return;
+    }
     setSelectedChapter(chapter);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -173,11 +260,36 @@ const StoryDetail = () => {
           </div>
 
           <div className="bg-[#1a1a1a] rounded-2xl p-8 mb-8 border border-[#2a2a2a]">
-            <div className="prose prose-invert max-w-none">
-              <div className="text-lg leading-relaxed whitespace-pre-wrap text-left">
-                {selectedChapter.content || 'ไม่มีเนื้อหาในตอนนี้'}
+            {canReadChapter(selectedChapter) ? (
+              <div className="prose prose-invert max-w-none">
+                <div className="text-lg leading-relaxed whitespace-pre-wrap text-left">
+                  {selectedChapter.content || 'ไม่มีเนื้อหาในตอนนี้'}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">🔒</div>
+                <h3 className="text-xl font-bold mb-2">ตอนนี้ต้องซื้อก่อนอ่าน</h3>
+                <p className="text-gray-400 mb-6">
+                  ราคา: {selectedChapter.price} เครดิต
+                  {selectedChapter.freeDate && !isChapterFree(selectedChapter) && (
+                    <span className="block mt-2">
+                      หรือรออ่านฟรีได้ในวันที่: {formatDate(selectedChapter.freeDate)}
+                    </span>
+                  )}
+                </p>
+                <button
+                  onClick={() => handlePurchaseChapter(selectedChapter)}
+                  disabled={purchasing}
+                  className="px-8 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 transition disabled:opacity-50"
+                >
+                  {purchasing ? 'กำลังดำเนินการ...' : `ซื้อตอน ${selectedChapter.price} เครดิต`}
+                </button>
+                <p className="text-sm text-gray-500 mt-4">
+                  เครดิตคงเหลือ: {credits}
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="flex justify-between mb-8">
@@ -388,9 +500,26 @@ const StoryDetail = () => {
                         {chapter.number}
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-medium group-hover:text-purple-400 transition">
-                          {chapter.title}
-                        </h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-medium group-hover:text-purple-400 transition">
+                            {chapter.title}
+                          </h3>
+                          {isChapterFree(chapter) ? (
+                            <span className="px-2 py-0.5 bg-green-500/20 text-green-400 rounded text-xs font-bold">
+                              ฟรี
+                            </span>
+                          ) : chapter.price > 0 && (
+                            purchasedChapters.includes(chapter.id) ? (
+                              <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded text-xs font-bold">
+                                ซื้อแล้ว
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 bg-yellow-500/20 text-yellow-400 rounded text-xs font-bold">
+                                {chapter.price} เครดิต
+                              </span>
+                            )
+                          )}
+                        </div>
                         <div className="flex items-center gap-4 text-xs text-gray-400 mt-1">
                           <span className="flex items-center gap-1">
                             <Eye size={14} />
@@ -400,6 +529,11 @@ const StoryDetail = () => {
                             <Calendar size={14} />
                             {formatDate(chapter.publishedAt)}
                           </span>
+                          {chapter.freeDate && !isChapterFree(chapter) && (
+                            <span className="text-xs text-gray-500">
+                              ฟรี: {formatDate(chapter.freeDate)}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </button>
