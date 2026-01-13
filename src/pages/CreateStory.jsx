@@ -278,14 +278,17 @@ const CreateStory = ({ currentLanguage }) => {
                     onChange={handleImageSelect}
                     className="hidden"
                   />
-                  <Button
+                  <button
                     type="button"
-                    variant="outline"
                     onClick={() => fileInputRef.current?.click()}
+                    className="px-4 py-2 rounded-lg border border-[#3a3a3a] bg-[#1a1a1a] hover:bg-[#2a2a2a] text-white transition flex items-center gap-2"
                   >
-                    <Upload className="w-4 h-4 mr-2" />
-                    {isThaiLanguage ? 'อัปโหลดภาพ' : 'Upload Image'}
-                  </Button>
+                    <Upload className="w-4 h-4" />
+                    {coverImagePreview 
+                      ? (isThaiLanguage ? 'เปลี่ยนรูพปก' : 'Change Cover')
+                      : (isThaiLanguage ? 'อัปโหลดภาพ' : 'Upload Image')
+                    }
+                  </button>
                   <p className="text-xs text-gray-500 mt-2">
                     {isThaiLanguage 
                       ? 'รองรับ JPG, PNG, GIF (สูงสุด 10MB)'
