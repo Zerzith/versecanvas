@@ -36,15 +36,23 @@ export default function Credits() {
   const fetchTransactionHistory = async () => {
     try {
       const q = query(
-        collection(db, 'payments'),
+        collection(db, 'transactions'),
         where('userId', '==', currentUser.uid),
-        orderBy('createdAt', 'desc')
+        where('type', '==', 'credit'),
+        orderBy('timestamp', 'desc')
       );
       const querySnapshot = await getDocs(q);
-      const historyData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const historyData = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          packageName: data.description || 'เติมเครดิต',
+          credits: data.amount,
+          amount: data.amount * 10, // Assuming 1 credit = 0.1 THB, adjust as needed
+          createdAt: data.timestamp,
+          status: 'success'
+        };
+      });
       setHistory(historyData);
     } catch (error) {
       console.error("Error fetching history:", error);
