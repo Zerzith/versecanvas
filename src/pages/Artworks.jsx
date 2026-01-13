@@ -62,10 +62,23 @@ const Artworks = ({ currentLanguage }) => {
     setLoading(true);
     try {
       let q;
+      // กรอง artworks ที่ไม่ถูกซ่อน
       if (sortBy === 'popular') {
-        q = query(collection(db, 'artworks'), orderBy('createdAt', 'desc'), limit(50));
+        q = query(
+          collection(db, 'artworks'), 
+          where('deleted', '!=', true),
+          orderBy('deleted'),
+          orderBy('createdAt', 'desc'), 
+          limit(50)
+        );
       } else {
-        q = query(collection(db, 'artworks'), orderBy('createdAt', 'desc'), limit(50));
+        q = query(
+          collection(db, 'artworks'), 
+          where('deleted', '!=', true),
+          orderBy('deleted'),
+          orderBy('createdAt', 'desc'), 
+          limit(50)
+        );
       }
       
       const querySnapshot = await getDocs(q);

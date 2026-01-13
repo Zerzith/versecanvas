@@ -44,7 +44,13 @@ const Stories = () => {
   const fetchStories = async () => {
     setLoading(true);
     try {
-      const q = query(collection(db, 'stories'), orderBy('createdAt', 'desc'));
+      // กรอง stories ที่ไม่ถูกซ่อน (deleted != true)
+      const q = query(
+        collection(db, 'stories'), 
+        where('deleted', '!=', true),
+        orderBy('deleted'),
+        orderBy('createdAt', 'desc')
+      );
       const querySnapshot = await getDocs(q);
       
       const storiesData = await Promise.all(

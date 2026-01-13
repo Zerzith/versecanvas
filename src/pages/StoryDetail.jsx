@@ -202,38 +202,24 @@ const StoryDetail = () => {
   };
 
   const handleDeleteStory = async () => {
-    if (!confirm('คุณต้องการลบเรื่องนี้หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้')) {
+    if (!confirm('คุณต้องการซ่อนเรื่องนี้หรือไม่? (ข้อมูลจะยังอยู่ แต่ไม่แสดงบนเว็บ)')) {
       return;
     }
 
     setDeleting(true);
     try {
-      // ดึง Firebase ID Token
-      const idToken = await currentUser.getIdToken();
-
-      // เรียก API เพื่อลบ story (ใช้ Vercel Function ที่มี Admin SDK)
-      const response = await fetch('/api/delete-story', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          storyId: storyId,
-          idToken: idToken,
-        }),
+      // Soft delete: เพิ่ม flag deleted แทนการลบจริง
+      await updateDoc(doc(db, 'stories', storyId), {
+        deleted: true,
+        deletedAt: new Date(),
+        deletedBy: currentUser.uid
       });
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || result.message || 'เกิดข้อผิดพลาดในการลบ');
-      }
-
-      alert(`ลบเรื่องสำเร็จ! (ลบ ${result.deletedChapters} ตอน)`);
+      alert('ซ่อนเรื่องสำเร็จ! (ข้อมูลยังอยู่ในระบบ)');
       navigate('/stories');
     } catch (error) {
-      console.error('Error deleting story:', error);
-      alert('เกิดข้อผิดพลาดในการลบเรื่อง: ' + error.message);
+      console.error('Error hiding story:', error);
+      alert('เกิดข้อผิดพลาดในการซ่อนเรื่อง: ' + error.message);
     } finally {
       setDeleting(false);
     }

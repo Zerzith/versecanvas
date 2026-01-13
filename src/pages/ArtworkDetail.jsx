@@ -7,7 +7,7 @@ import SocialActions from '../components/SocialActions';
 import CommentSection from '../components/CommentSection';
 import FollowButton from '../components/FollowButton';
 import UserAvatar from '../components/UserAvatar';
-import { getDoc, doc, deleteDoc } from 'firebase/firestore';
+import { getDoc, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db, realtimeDb } from '../lib/firebase';
 import { ref, get } from 'firebase/database';
 import { format } from 'date-fns';
@@ -89,14 +89,19 @@ const ArtworkDetail = () => {
       return;
     }
 
-    if (window.confirm('คุณแน่ใจหรือว่าต้องการลบผลงานนี้?')) {
+    if (window.confirm('คุณต้องการซ่อนผลงานนี้หรือไม่? (ข้อมูลจะยังอยู่ แต่ไม่แสดงบนเว็บ)')) {
       try {
-        await deleteDoc(doc(db, 'artworks', artworkId));
-        alert('ลบผลงานสำเร็จ');
+        // Soft delete: เพิ่ม flag deleted แทนการลบจริง
+        await updateDoc(doc(db, 'artworks', artworkId), {
+          deleted: true,
+          deletedAt: new Date(),
+          deletedBy: currentUser.uid
+        });
+        alert('ซ่อนผลงานสำเร็จ! (ข้อมูลยังอยู่ในระบบ)');
         window.location.href = '/artworks';
       } catch (error) {
-        console.error('Error deleting artwork:', error);
-        alert('เกิดข้อผิดพลาดในการลบผลงาน');
+        console.error('Error hiding artwork:', error);
+        alert('เกิดข้อผิดพลาดในการซ่อนผลงาน');
       }
     }
   };

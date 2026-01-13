@@ -135,7 +135,7 @@ export default function ContentManagement() {
       await Promise.all(storyChapters.map(doc => deleteDoc(doc.ref)));
 
       // Delete story
-      await updateDoc(doc(db, 'stories', storyId), { deleted: true, deletedAt: new Date() });
+      await deleteDoc(doc(db, 'stories', storyId));
       setStories(stories.filter(s => s.id !== storyId));
       toast.success('ลบนิยายสำเร็จ!');
     } catch (error) {
@@ -148,7 +148,7 @@ export default function ContentManagement() {
     if (!confirm('คุณต้องการลบผลงานนี้หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้!')) return;
 
     try {
-      await updateDoc(doc(db, 'artworks', artworkId), { deleted: true, deletedAt: new Date() });
+      await deleteDoc(doc(db, 'artworks', artworkId));
       setArtworks(artworks.filter(a => a.id !== artworkId));
       toast.success('ลบผลงานสำเร็จ!');
     } catch (error) {
@@ -161,7 +161,7 @@ export default function ContentManagement() {
     if (!confirm('คุณต้องการลบสินค้านี้หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้!')) return;
 
     try {
-      await updateDoc(doc(db, 'products', productId), { deleted: true, deletedAt: new Date() });
+      await deleteDoc(doc(db, 'products', productId));
       setProducts(products.filter(p => p.id !== productId));
       toast.success('ลบสินค้าสำเร็จ!');
     } catch (error) {
