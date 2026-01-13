@@ -29,12 +29,14 @@ const StoryDetail = () => {
   const [deleting, setDeleting] = useState(false);
   const [purchasedChapters, setPurchasedChapters] = useState([]);
   const [purchasing, setPurchasing] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     fetchStoryDetail();
     incrementView(storyId, 'story');
     if (currentUser) {
       loadPurchasedChapters();
+      checkAdminStatus();
     }
   }, [storyId, currentUser]);
 
@@ -91,6 +93,18 @@ const StoryDetail = () => {
     }
   };
 
+  const checkAdminStatus = async () => {
+    if (!currentUser) return;
+    try {
+      const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+      if (userDoc.exists() && userDoc.data().role === 'admin') {
+        setIsAdmin(true);
+      }
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+    }
+  };
+
   const isChapterFree = (chapter) => {
     if (!chapter.price || chapter.price === 0) return true;
     if (chapter.freeDate) {
@@ -102,6 +116,7 @@ const StoryDetail = () => {
 
   const canReadChapter = (chapter) => {
     if (!currentUser) return false;
+    if (isAdmin) return true;
     if (currentUser.uid === story?.authorId) return true;
     if (isChapterFree(chapter)) return true;
     return purchasedChapters.includes(chapter.id);
@@ -273,7 +288,7 @@ const StoryDetail = () => {
                   <span>{selectedChapter.wordCount} คำ</span>
                 </div>
               </div>
-              {currentUser && currentUser.uid === story.authorId && (
+              {currentUser && (currentUser.uid === story.authorId || isAdmin) && (
                 <Link
                   to={`/story/${storyId}/chapter/${selectedChapter.id}/edit`}
                   className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition flex items-center gap-2"
@@ -448,7 +463,7 @@ const StoryDetail = () => {
                     แสดงความคิดเห็น
                   </button>
 
-                  {currentUser && currentUser.uid === story.authorId && (
+                  {currentUser && (currentUser.uid === story.authorId || isAdmin) && (
                     <>
                       <Link
                         to={`/story/${storyId}/edit`}
@@ -502,7 +517,7 @@ const StoryDetail = () => {
             <div className="bg-[#1a1a1a] rounded-2xl p-6 border border-[#2a2a2a]">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold">รายการตอน ({chapters.length} ตอน)</h2>
-                {currentUser && currentUser.uid === story.authorId && (
+                {currentUser && (currentUser.uid === story.authorId || isAdmin) && (
                   <Link
                     to={`/story/${storyId}/add-chapter`}
                     className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-sm font-medium transition flex items-center gap-2"
@@ -564,7 +579,7 @@ const StoryDetail = () => {
                       </div>
                     </button>
                     <div className="flex items-center gap-2">
-                      {currentUser && currentUser.uid === story.authorId && (
+                      {currentUser && (currentUser.uid === story.authorId || isAdmin) && (isAdmin) && (
                         <Link
                           to={`/story/${storyId}/chapter/${chapter.id}/edit`}
                           className="p-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition"

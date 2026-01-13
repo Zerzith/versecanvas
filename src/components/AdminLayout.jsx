@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Users, BookOpen, DollarSign, AlertCircle, 
-  Settings, BarChart3, Home, Menu, X
+  Settings, BarChart3, Home, Menu, X, Briefcase
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -13,6 +13,7 @@ export default function AdminLayout({ children }) {
     { path: '/admin', icon: LayoutDashboard, label: 'Dashboard', exact: true },
     { path: '/admin/users', icon: Users, label: 'จัดการผู้ใช้' },
     { path: '/admin/content', icon: BookOpen, label: 'จัดการเนื้อหา' },
+    { path: '/admin/jobs', icon: Briefcase, label: 'จัดการงาน' },
     { path: '/admin/transactions', icon: DollarSign, label: 'ธุรกรรม' },
     { path: '/admin/withdrawals', icon: DollarSign, label: 'อนุมัติถอนเงิน' },
     { path: '/admin/analytics', icon: BarChart3, label: 'Analytics' },

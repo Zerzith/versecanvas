@@ -30,6 +30,7 @@ const JobDetail = () => {
   const [selectedArtist, setSelectedArtist] = useState(null);
   const [hasApplied, setHasApplied] = useState(false);
   const [workSubmitted, setWorkSubmitted] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
 
   useEffect(() => {
@@ -38,6 +39,7 @@ const JobDetail = () => {
       loadUserCredits();
       checkIfApplied();
       checkWorkSubmission();
+      checkAdminStatus();
     }
   }, [jobId, currentUser]);
 
@@ -75,6 +77,18 @@ const JobDetail = () => {
       setWorkSubmitted(hasValidSubmission);
     } catch (error) {
       console.error('Error checking work submission:', error);
+    }
+  };
+
+  const checkAdminStatus = async () => {
+    if (!currentUser) return;
+    try {
+      const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+      if (userDoc.exists() && userDoc.data().role === 'admin') {
+        setIsAdmin(true);
+      }
+    } catch (error) {
+      console.error('Error checking admin status:', error);
     }
   };
 
@@ -425,7 +439,7 @@ ${message}`,
               </Link>
 
               {/* Follow Button */}
-              {currentUser && currentUser.uid !== job.userId && (
+              {currentUser && (currentUser.uid !== job.userId || isAdmin) && (
                 <div className="mb-6 pb-6 border-b border-[#2a2a2a]">
                   <FollowButton targetUserId={job.userId} />
                 </div>
@@ -481,7 +495,7 @@ ${message}`,
               )}
 
               {/* Applicants Button - เฉพาะเจ้าของงาน (ลูกค้า) */}
-              {currentUser && currentUser.uid === job.userId && job.status === 'open' && (
+              {currentUser && (currentUser.uid === job.userId || isAdmin) && job.status === 'open' && (
                 <button
                   onClick={() => setShowApplicantsModal(true)}
                   className="w-full py-3 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 font-medium transition flex items-center justify-center gap-2 mb-3"
@@ -492,7 +506,7 @@ ${message}`,
               )}
 
               {/* Review Work Button - เฉพาะเจ้าของงานเมื่อมีงานส่งมา */}
-              {currentUser && currentUser.uid === job.userId && workSubmitted && (
+              {currentUser && (currentUser.uid === job.userId || isAdmin) && workSubmitted && (
                 <Link
                   to={`/job/${jobId}/review`}
                   className="w-full py-3 rounded-xl bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 font-medium transition flex items-center justify-center gap-2 mb-3"

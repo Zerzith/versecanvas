@@ -89,7 +89,7 @@ service cloud.firestore {
       // Chapters Subcollection
       match /chapters/{chapterId} {
         allow read: if true; // ทุกคนอ่านได้
-        allow write: if isSignedIn(); // ผู้ที่ล็อกอินเขียนได้
+        allow write: if isSignedIn() || isAdmin(); // ผู้ที่ล็อกอินหรือแอดมินเขียนได้
       }
     }
     
@@ -209,10 +209,10 @@ service cloud.firestore {
     // Bookmarks Collection
     // ============================================
     match /bookmarks/{bookmarkId} {
-      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
       allow create: if isSignedIn();
-      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
     }
     
     // ============================================
@@ -221,16 +221,16 @@ service cloud.firestore {
     match /follows/{followId} {
       allow read: if true; // ทุกคนอ่านได้
       allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn() && resource.data.followerId == request.auth.uid;
+      allow update: if isSignedIn() || isAdmin();
+      allow delete: if isSignedIn() && (resource.data.followerId == request.auth.uid || isAdmin());
     }
     
     // ============================================
     // Settings Collection
     // ============================================
     match /settings/{userId} {
-      allow read: if isSignedIn() && userId == request.auth.uid;
-      allow write: if isSignedIn() && userId == request.auth.uid;
+      allow read: if isSignedIn() && (userId == request.auth.uid || isAdmin());
+      allow write: if isSignedIn() && (userId == request.auth.uid || isAdmin());
     }
     
     // ============================================
@@ -239,8 +239,8 @@ service cloud.firestore {
     match /likes/{likeId} {
       allow read: if true; // ทุกคนอ่านได้
       allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() || isAdmin();
+      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
     }
     
     // ============================================
@@ -328,9 +328,10 @@ service cloud.firestore {
       allow create: if isSignedIn();
       allow update: if isSignedIn() && (
         resource.data.senderId == request.auth.uid ||
-        resource.data.receiverId == request.auth.uid
+        resource.data.receiverId == request.auth.uid ||
+        isAdmin()
       );
-      allow delete: if isSignedIn() && resource.data.senderId == request.auth.uid;
+      allow delete: if isSignedIn() && (resource.data.senderId == request.auth.uid || isAdmin());
     }
     
     // ============================================
@@ -354,9 +355,9 @@ service cloud.firestore {
       );
       // สร้างได้เมื่อล็อกอินและเป็นการซื้อของตัวเอง
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      // ไม่อนุญาตให้แก้ไขหรือลบ
-      allow update: if false;
-      allow delete: if false;
+      // แอดมินสามารถแก้ไขและลบได้
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
     }
   }
 }

@@ -24,13 +24,17 @@ const ArtworkDetail = () => {
   const [viewCount, setViewCount] = useState(0);
   const [likeCount, setLikeCount] = useState(0);
   const [showComments, setShowComments] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (artworkId) {
       fetchArtworkDetail();
       incrementView(artworkId, 'artwork');
     }
-  }, [artworkId]);
+    if (currentUser) {
+      checkAdminStatus();
+    }
+  }, [artworkId, currentUser]);
 
 
 
@@ -67,8 +71,20 @@ const ArtworkDetail = () => {
 
 
 
+  const checkAdminStatus = async () => {
+    if (!currentUser) return;
+    try {
+      const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+      if (userDoc.exists() && userDoc.data().role === 'admin') {
+        setIsAdmin(true);
+      }
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+    }
+  };
+
   const handleDelete = async () => {
-    if (!currentUser || artwork.artistId !== currentUser.uid) {
+    if (!currentUser || (artwork.artistId !== currentUser.uid && !isAdmin)) {
       alert('คุณไม่มีสิทธิ์ลบผลงานนี้');
       return;
     }
@@ -131,7 +147,7 @@ const ArtworkDetail = () => {
     );
   }
 
-  const isOwner = currentUser && artwork.artistId === currentUser.uid;
+  const isOwner = currentUser && (artwork.artistId === currentUser.uid || isAdmin);
 
   return (
     <div className="min-h-screen bg-[#0f0f0f] text-white pt-20 pb-12">
