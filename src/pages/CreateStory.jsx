@@ -41,18 +41,13 @@ const CreateStory = ({ currentLanguage }) => {
       return;
     }
 
-    setError('');
     setCoverImage(file);
-    
-    // Create preview URL
     const reader = new FileReader();
-    reader.onload = (event) => {
-      setCoverImagePreview(event.target.result);
-    };
-    reader.onerror = () => {
-      setError(isThaiLanguage ? 'ไม่สามารถโหลดรูปได้' : 'Failed to load image');
+    reader.onloadend = () => {
+      setCoverImagePreview(reader.result);
     };
     reader.readAsDataURL(file);
+    setError('');
   };
 
   const handleSubmit = async (e) => {
@@ -249,13 +244,13 @@ const CreateStory = ({ currentLanguage }) => {
               <label className="block text-sm font-medium text-white mb-2">
                 {isThaiLanguage ? 'ภาพปก' : 'Cover Image'}
               </label>
-              <div className="flex flex-col items-center">
+              <div className="flex items-start space-x-4">
                 {coverImagePreview ? (
-                  <div className="relative w-full max-w-2xl rounded-lg overflow-hidden border-2 border-[#2a2a2a] mb-4">
+                  <div className="relative w-48 h-32 rounded-lg overflow-hidden border-2 border-[#2a2a2a]">
                     <img
                       src={coverImagePreview}
                       alt="Cover preview"
-                      className="w-full h-auto object-contain max-h-96"
+                      className="w-full h-full object-cover"
                     />
                     <button
                       type="button"
@@ -263,47 +258,41 @@ const CreateStory = ({ currentLanguage }) => {
                         setCoverImage(null);
                         setCoverImagePreview('');
                       }}
-                      className="absolute top-4 right-4 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 shadow-lg"
+                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
                     >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
                   </div>
                 ) : (
-                  <div 
-                    className="w-full max-w-2xl h-64 rounded-lg border-2 border-dashed border-[#2a2a2a] flex flex-col items-center justify-center bg-[#0f0f0f] mb-4 cursor-pointer hover:border-purple-500 transition-colors"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <ImageIcon className="w-16 h-16 text-gray-400 mb-4" />
-                    <p className="text-gray-400 font-medium mb-2">
-                      {isThaiLanguage ? 'คลิกเพื่ออัปโหลดรูปภาพ' : 'Click to upload image'}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {isThaiLanguage 
-                        ? 'รองรับ JPG, PNG, GIF (สูงสุด 10MB)'
-                        : 'Supports JPG, PNG, GIF (max 10MB)'
-                      }
-                    </p>
+                  <div className="w-48 h-32 rounded-lg border-2 border-dashed border-[#2a2a2a] flex items-center justify-center bg-[#0f0f0f]">
+                    <ImageIcon className="w-12 h-12 text-gray-400" />
                   </div>
                 )}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageSelect}
-                  className="hidden"
-                />
-                {!coverImagePreview && (
+                <div className="flex-1">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageSelect}
+                    className="hidden"
+                  />
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => fileInputRef.current?.click()}
                   >
                     <Upload className="w-4 h-4 mr-2" />
-                    {isThaiLanguage ? 'เลือกรูปภาพ' : 'Select Image'}
+                    {isThaiLanguage ? 'อัปโหลดภาพ' : 'Upload Image'}
                   </Button>
-                )}
+                  <p className="text-xs text-gray-500 mt-2">
+                    {isThaiLanguage 
+                      ? 'รองรับ JPG, PNG, GIF (สูงสุด 10MB)'
+                      : 'Supports JPG, PNG, GIF (max 10MB)'
+                    }
+                  </p>
+                </div>
               </div>
             </div>
 
