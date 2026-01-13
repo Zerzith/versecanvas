@@ -85,14 +85,31 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Sign in with email and password
-  const login = (email, password) => {
-    return signInWithEmailAndPassword(auth, email, password);
+  const login = async (email, password) => {
+    const result = await signInWithEmailAndPassword(auth, email, password);
+    
+    // Check if user is banned
+    const profile = await getUserProfile(result.user.uid);
+    if (profile && profile.banned) {
+      await signOut(auth);
+      throw new Error('บัญชีของคุณถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ');
+    }
+    
+    return result;
   };
 
   // Sign in with Google
   const signInWithGoogle = async () => {
     const result = await signInWithPopup(auth, googleProvider);
     await createUserProfile(result.user);
+    
+    // Check if user is banned
+    const profile = await getUserProfile(result.user.uid);
+    if (profile && profile.banned) {
+      await signOut(auth);
+      throw new Error('บัญชีของคุณถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ');
+    }
+    
     return result;
   };
 
@@ -114,7 +131,17 @@ export const AuthProvider = ({ children }) => {
       
       if (user) {
         const profile = await getUserProfile(user.uid);
-        setUserProfile(profile);
+        
+        // Check if user is banned
+        if (profile && profile.banned) {
+          // Force logout banned users
+          await signOut(auth);
+          setCurrentUser(null);
+          setUserProfile(null);
+          alert('บัญชีของคุณถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ');
+        } else {
+          setUserProfile(profile);
+        }
       } else {
         setUserProfile(null);
       }

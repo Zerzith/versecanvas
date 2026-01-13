@@ -126,7 +126,7 @@ export default function ContentManagement() {
   };
 
   const handleDeleteStory = async (storyId) => {
-    if (!confirm('คุณต้องการลบนิยายนี้หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้!')) return;
+    if (!confirm('คุณต้องการลบนิยายนี้ถาวรหรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้!')) return;
 
     try {
       // Delete all chapters first
@@ -134,10 +134,10 @@ export default function ContentManagement() {
       const storyChapters = chaptersSnap.docs.filter(doc => doc.data().storyId === storyId);
       await Promise.all(storyChapters.map(doc => deleteDoc(doc.ref)));
 
-      // Delete story
-      await updateDoc(doc(db, 'stories', storyId), { deleted: true, deletedAt: new Date() });
+      // Delete story permanently
+      await deleteDoc(doc(db, 'stories', storyId));
       setStories(stories.filter(s => s.id !== storyId));
-      toast.success('ลบนิยายสำเร็จ!');
+      toast.success('ลบนิยายถาวรสำเร็จ!');
     } catch (error) {
       console.error('Error deleting story:', error);
       toast.error('เกิดข้อผิดพลาดในการลบ: ' + error.message);
@@ -145,12 +145,13 @@ export default function ContentManagement() {
   };
 
   const handleDeleteArtwork = async (artworkId) => {
-    if (!confirm('คุณต้องการลบผลงานนี้หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้!')) return;
+    if (!confirm('คุณต้องการลบผลงานนี้ถาวรหรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้!')) return;
 
     try {
-      await updateDoc(doc(db, 'artworks', artworkId), { deleted: true, deletedAt: new Date() });
+      // Delete artwork permanently
+      await deleteDoc(doc(db, 'artworks', artworkId));
       setArtworks(artworks.filter(a => a.id !== artworkId));
-      toast.success('ลบผลงานสำเร็จ!');
+      toast.success('ลบผลงานถาวรสำเร็จ!');
     } catch (error) {
       console.error('Error deleting artwork:', error);
       toast.error('เกิดข้อผิดพลาดในการลบ: ' + error.message);
@@ -158,12 +159,13 @@ export default function ContentManagement() {
   };
 
   const handleDeleteProduct = async (productId) => {
-    if (!confirm('คุณต้องการลบสินค้านี้หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้!')) return;
+    if (!confirm('คุณต้องการลบสินค้านี้ถาวรหรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้!')) return;
 
     try {
-      await updateDoc(doc(db, 'products', productId), { deleted: true, deletedAt: new Date() });
+      // Delete product permanently
+      await deleteDoc(doc(db, 'products', productId));
       setProducts(products.filter(p => p.id !== productId));
-      toast.success('ลบสินค้าสำเร็จ!');
+      toast.success('ลบสินค้าถาวรสำเร็จ!');
     } catch (error) {
       console.error('Error deleting product:', error);
       toast.error('เกิดข้อผิดพลาดในการลบ: ' + error.message);
