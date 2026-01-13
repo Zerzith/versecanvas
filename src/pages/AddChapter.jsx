@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
-import { collection, addDoc, serverTimestamp, doc, updateDoc, increment, getDocs } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, updateDoc, increment, getDocs, getDoc } from 'firebase/firestore';
 import { Save, ArrowLeft } from 'lucide-react';
 
 export default function AddChapter() {
@@ -10,10 +10,50 @@ export default function AddChapter() {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     title: '',
     content: ''
   });
+
+  useEffect(() => {
+    verifyOwnership();
+  }, [storyId, currentUser]);
+
+  const verifyOwnership = async () => {
+    if (!currentUser) {
+      alert('กรุณาลงชื่อก่อนเข้า');
+      navigate('/login');
+      return;
+    }
+
+    try {
+      const storyDoc = await getDoc(doc(db, 'stories', storyId));
+      if (storyDoc.exists()) {
+        const storyData = storyDoc.data();
+        if (storyData.authorId !== currentUser.uid) {
+          alert('คุณไม่มีสิทธิ์เพิ่มตอนในเรื่องนี้');
+          navigate(`/story/${storyId}`);
+          return;
+        }
+      }
+    } catch (error) {
+      console.error('Error verifying ownership:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0f0f0f] text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent mb-4"></div>
+          <p className="text-gray-400">กำลังโหลด...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleSave = async () => {
     if (!formData.title.trim()) {

@@ -1,19 +1,20 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { BookOpen, Eye, Heart, Clock, User, ChevronRight, MessageCircle, Share2, Edit, Trash2, Calendar } from 'lucide-react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { BookOpen, Eye, Heart, Clock, User, ChevronRight, MessageCircle, Share2, Edit, Trash2, Calendar, Plus } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocial } from '../contexts/SocialContext';
 import SocialActions from '../components/SocialActions';
 import CommentSection from '../components/CommentSection';
 import FollowButton from '../components/FollowButton';
 import UserAvatar from '../components/UserAvatar';
-import { collection, query, orderBy, getDocs, getDoc, doc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, getDoc, doc, deleteDoc, updateDoc, writeBatch } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
 
 const StoryDetail = () => {
   const { storyId } = useParams();
+  const navigate = useNavigate();
   const { currentUser } = useAuth();
   const { incrementView, getViewCount, getLikeCount } = useSocial();
   const [story, setStory] = useState(null);
@@ -23,10 +24,10 @@ const StoryDetail = () => {
   const [selectedChapter, setSelectedChapter] = useState(null);
   const [viewCount, setViewCount] = useState(0);
   const [likeCount, setLikeCount] = useState(0);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetchStoryDetail();
-    // Increment view count when story is opened
     incrementView(storyId, 'story');
   }, [storyId]);
 
@@ -46,12 +47,10 @@ const StoryDetail = () => {
   const fetchStoryDetail = async () => {
     setLoading(true);
     try {
-      // Fetch story from Firebase
       const storyDoc = await getDoc(doc(db, 'stories', storyId));
       if (storyDoc.exists()) {
         setStory({ id: storyDoc.id, ...storyDoc.data() });
       }
-      // Fetch chapters from Firebase
       const chaptersQuery = query(
         collection(db, 'stories', storyId, 'chapters'),
         orderBy('number', 'asc')
@@ -71,8 +70,35 @@ const StoryDetail = () => {
 
   const handleChapterClick = (chapter) => {
     setSelectedChapter(chapter);
-    // Scroll to top when opening a chapter
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDeleteStory = async () => {
+    if (!confirm('คุณต้องการลบเรื่องนี้หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้')) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      const chaptersRef = collection(db, 'stories', storyId, 'chapters');
+      const chaptersSnapshot = await getDocs(chaptersRef);
+      
+      const batch = writeBatch(db);
+      chaptersSnapshot.docs.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+      await batch.commit();
+
+      await deleteDoc(doc(db, 'stories', storyId));
+
+      alert('ลบเรื่องสำเร็จ!');
+      navigate('/stories');
+    } catch (error) {
+      console.error('Error deleting story:', error);
+      alert('เกิดข้อผิดพลาดในการลบเรื่อง');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const formatDate = (date) => {
@@ -107,12 +133,10 @@ const StoryDetail = () => {
     );
   }
 
-  // If chapter is selected, show chapter reading view
   if (selectedChapter) {
     return (
       <div className="min-h-screen bg-[#0f0f0f] text-white">
         <div className="max-w-4xl mx-auto px-4 py-8">
-          {/* Back Button */}
           <button
             onClick={() => setSelectedChapter(null)}
             className="mb-6 flex items-center gap-2 text-gray-400 hover:text-purple-400 transition"
@@ -120,23 +144,34 @@ const StoryDetail = () => {
             ← กลับไปรายการตอน
           </button>
 
-          {/* Chapter Header */}
           <div className="bg-[#1a1a1a] rounded-2xl p-8 mb-8 border border-[#2a2a2a]">
-            <h1 className="text-3xl font-bold mb-2">{selectedChapter.title}</h1>
-            <div className="flex items-center gap-4 text-sm text-gray-400">
-              <span className="flex items-center gap-1">
-                <Eye size={16} />
-                {selectedChapter.views} ครั้ง
-              </span>
-              <span className="flex items-center gap-1">
-                <Calendar size={16} />
-                {formatDate(selectedChapter.publishedAt)}
-              </span>
-              <span>{selectedChapter.wordCount} คำ</span>
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h1 className="text-3xl font-bold mb-2">{selectedChapter.title}</h1>
+                <div className="flex items-center gap-4 text-sm text-gray-400">
+                  <span className="flex items-center gap-1">
+                    <Eye size={16} />
+                    {selectedChapter.views} ครั้ง
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Calendar size={16} />
+                    {formatDate(selectedChapter.publishedAt)}
+                  </span>
+                  <span>{selectedChapter.wordCount} คำ</span>
+                </div>
+              </div>
+              {currentUser && currentUser.uid === story.authorId && (
+                <Link
+                  to={`/story/${storyId}/chapter/${selectedChapter.id}/edit`}
+                  className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition flex items-center gap-2"
+                >
+                  <Edit size={16} />
+                  แก้ไข
+                </Link>
+              )}
             </div>
           </div>
 
-          {/* Chapter Content */}
           <div className="bg-[#1a1a1a] rounded-2xl p-8 mb-8 border border-[#2a2a2a]">
             <div className="prose prose-invert max-w-none">
               <div className="text-lg leading-relaxed whitespace-pre-wrap text-left">
@@ -145,7 +180,6 @@ const StoryDetail = () => {
             </div>
           </div>
 
-          {/* Navigation */}
           <div className="flex justify-between mb-8">
             {selectedChapter.number > 1 && (
               <button
@@ -165,7 +199,6 @@ const StoryDetail = () => {
             )}
           </div>
 
-          {/* Social Actions */}
           <div className="bg-[#1a1a1a] rounded-2xl p-6 border border-[#2a2a2a]">
             <SocialActions
               postId={selectedChapter.id}
@@ -261,12 +294,14 @@ const StoryDetail = () => {
                 </div>
 
                 <div className="space-y-3">
-                  <button
-                    onClick={() => handleChapterClick(chapters[0])}
-                    className="w-full py-3 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 font-medium transition"
-                  >
-                    เริ่มอ่าน
-                  </button>
+                  {chapters.length > 0 && (
+                    <button
+                      onClick={() => handleChapterClick(chapters[0])}
+                      className="w-full py-3 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 font-medium transition"
+                    >
+                      เริ่มอ่าน
+                    </button>
+                  )}
                   <button
                     onClick={() => setShowComments(true)}
                     className="w-full py-3 rounded-xl bg-[#2a2a2a] hover:bg-[#3a3a3a] font-medium transition flex items-center justify-center gap-2"
@@ -275,6 +310,25 @@ const StoryDetail = () => {
                     แสดงความคิดเห็น
                   </button>
 
+                  {currentUser && currentUser.uid === story.authorId && (
+                    <>
+                      <Link
+                        to={`/story/${storyId}/edit`}
+                        className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 font-medium transition flex items-center justify-center gap-2"
+                      >
+                        <Edit size={18} />
+                        แก้ไขเรื่อง
+                      </Link>
+                      <button
+                        onClick={handleDeleteStory}
+                        disabled={deleting}
+                        className="w-full py-3 rounded-xl bg-red-600 hover:bg-red-700 font-medium transition flex items-center justify-center gap-2 disabled:opacity-50"
+                      >
+                        <Trash2 size={18} />
+                        {deleting ? "กำลังลบ..." : "ลบเรื่อง"}
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -308,15 +362,28 @@ const StoryDetail = () => {
             </div>
 
             <div className="bg-[#1a1a1a] rounded-2xl p-6 border border-[#2a2a2a]">
-              <h2 className="text-xl font-bold mb-4">รายการตอน ({chapters.length} ตอน)</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold">รายการตอน ({chapters.length} ตอน)</h2>
+                {currentUser && currentUser.uid === story.authorId && (
+                  <Link
+                    to={`/story/${storyId}/add-chapter`}
+                    className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-sm font-medium transition flex items-center gap-2"
+                  >
+                    <Plus size={16} />
+                    เพิ่มตอน
+                  </Link>
+                )}
+              </div>
               <div className="space-y-2">
                 {chapters.map((chapter) => (
-                  <button
+                  <div
                     key={chapter.id}
-                    onClick={() => handleChapterClick(chapter)}
-                    className="w-full flex items-center justify-between p-4 rounded-xl bg-[#2a2a2a] hover:bg-[#3a3a3a] border-2 border-transparent hover:border-purple-500 transition group"
+                    className="flex items-center justify-between p-4 rounded-xl bg-[#2a2a2a] hover:bg-[#3a3a3a] border-2 border-transparent hover:border-purple-500 transition group"
                   >
-                    <div className="flex items-center gap-4 flex-1 text-left">
+                    <button
+                      onClick={() => handleChapterClick(chapter)}
+                      className="flex items-center gap-4 flex-1 text-left"
+                    >
                       <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center font-bold text-sm">
                         {chapter.number}
                       </div>
@@ -335,9 +402,20 @@ const StoryDetail = () => {
                           </span>
                         </div>
                       </div>
+                    </button>
+                    <div className="flex items-center gap-2">
+                      {currentUser && currentUser.uid === story.authorId && (
+                        <Link
+                          to={`/story/${storyId}/chapter/${chapter.id}/edit`}
+                          className="p-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition"
+                          title="แก้ไขตอน"
+                        >
+                          <Edit size={16} />
+                        </Link>
+                      )}
+                      <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-purple-400 transition" />
                     </div>
-                    <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-purple-400 transition" />
-                  </button>
+                  </div>
                 ))}
               </div>
             </div>

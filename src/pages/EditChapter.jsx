@@ -25,12 +25,16 @@ export default function EditChapter() {
 
   const loadData = async () => {
     try {
-      // โหลดข้อมูลเรื่อง
+      if (!currentUser) {
+        alert('กรุณาลงชื่อก่อนเข้า');
+        navigate('/login');
+        return;
+      }
+
       const storyDoc = await getDoc(doc(db, 'stories', storyId));
       if (storyDoc.exists()) {
         const storyData = storyDoc.data();
         
-        // ตรวจสอบว่าเป็นเจ้าของเรื่องหรือไม่
         if (storyData.authorId !== currentUser.uid) {
           alert('คุณไม่มีสิทธิ์แก้ไขตอนนี้');
           navigate(`/story/${storyId}`);
@@ -38,9 +42,12 @@ export default function EditChapter() {
         }
 
         setStory(storyData);
+      } else {
+        alert('ไม่พบเรื่อง');
+        navigate('/stories');
+        return;
       }
 
-      // โหลดข้อมูลตอน
       const chapterDoc = await getDoc(doc(db, 'stories', storyId, 'chapters', chapterId));
       if (chapterDoc.exists()) {
         const chapterData = chapterDoc.data();
@@ -50,9 +57,14 @@ export default function EditChapter() {
           content: chapterData.content || '',
           number: chapterData.number || 1
         });
+      } else {
+        alert('ไม่พบตอน');
+        navigate(`/story/${storyId}`);
+        return;
       }
     } catch (error) {
       console.error('Error loading data:', error);
+      alert('เกิดข้อผิดพลาดในการโหลดข้อมูล');
     } finally {
       setLoading(false);
     }
@@ -79,7 +91,6 @@ export default function EditChapter() {
 
       await updateDoc(doc(db, 'stories', storyId, 'chapters', chapterId), updateData);
 
-      // อัปเดตเวลาของเรื่องด้วย
       await updateDoc(doc(db, 'stories', storyId), {
         updatedAt: serverTimestamp()
       });
@@ -101,10 +112,8 @@ export default function EditChapter() {
 
     setSaving(true);
     try {
-      // ลบตอน
       await deleteDoc(doc(db, 'stories', storyId, 'chapters', chapterId));
 
-      // อัปเดตจำนวนตอนในเรื่อง
       const storyRef = doc(db, 'stories', storyId);
       const storyDoc = await getDoc(storyRef);
       if (storyDoc.exists()) {
@@ -139,7 +148,6 @@ export default function EditChapter() {
   return (
     <div className="min-h-screen bg-[#0f0f0f] text-white pt-24 pb-12">
       <div className="max-w-4xl mx-auto px-4">
-        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
             <button
@@ -177,9 +185,7 @@ export default function EditChapter() {
           </div>
         </div>
 
-        {/* Form */}
         <div className="space-y-6">
-          {/* Chapter Number */}
           <div className="bg-[#1a1a1a] rounded-2xl p-6 border border-[#2a2a2a]">
             <label className="block text-sm text-gray-400 mb-3">ตอนที่</label>
             <input
@@ -191,7 +197,6 @@ export default function EditChapter() {
             />
           </div>
 
-          {/* Title */}
           <div className="bg-[#1a1a1a] rounded-2xl p-6 border border-[#2a2a2a]">
             <label className="block text-sm text-gray-400 mb-3">ชื่อตอน</label>
             <input
@@ -203,7 +208,6 @@ export default function EditChapter() {
             />
           </div>
 
-          {/* Content */}
           <div className="bg-[#1a1a1a] rounded-2xl p-6 border border-[#2a2a2a]">
             <label className="block text-sm text-gray-400 mb-3">เนื้อหา</label>
             <textarea

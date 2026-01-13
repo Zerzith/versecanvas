@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
 import { doc, getDoc, updateDoc, deleteDoc, collection, getDocs, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { uploadImage } from '../lib/cloudinary';
-import { Save, Plus, Edit, Trash2, ArrowLeft, Upload } from 'lucide-react';
+import { Save, Plus, Edit, Trash2, ArrowLeft, Upload, X } from 'lucide-react';
 
 export default function EditStory() {
   const { storyId } = useParams();
@@ -30,11 +30,16 @@ export default function EditStory() {
 
   const loadStory = async () => {
     try {
+      if (!currentUser) {
+        alert('กรุณาลงชื่อก่อนเข้า');
+        navigate('/login');
+        return;
+      }
+
       const storyDoc = await getDoc(doc(db, 'stories', storyId));
       if (storyDoc.exists()) {
         const storyData = storyDoc.data();
         
-        // ตรวจสอบว่าเป็นเจ้าของเรื่องหรือไม่
         if (storyData.authorId !== currentUser.uid) {
           alert('คุณไม่มีสิทธิ์แก้ไขเรื่องนี้');
           navigate(`/story/${storyId}`);
@@ -49,9 +54,14 @@ export default function EditStory() {
           tags: storyData.tags || [],
           status: storyData.status || 'กำลังเขียน'
         });
+      } else {
+        alert('ไม่พบเรื่อง');
+        navigate('/stories');
+        return;
       }
     } catch (error) {
       console.error('Error loading story:', error);
+      alert('เกิดข้อผิดพลาดในการโหลดข้อมูล');
     } finally {
       setLoading(false);
     }
@@ -80,7 +90,6 @@ export default function EditStory() {
 
     setSaving(true);
     try {
-      // ลบตอนทั้งหมดก่อน
       const chaptersRef = collection(db, 'stories', storyId, 'chapters');
       const chaptersSnapshot = await getDocs(chaptersRef);
       
@@ -90,7 +99,6 @@ export default function EditStory() {
       });
       await batch.commit();
 
-      // ลบเรื่อง
       await deleteDoc(doc(db, 'stories', storyId));
 
       alert('ลบเรื่องสำเร็จ!');
@@ -163,7 +171,6 @@ export default function EditStory() {
   return (
     <div className="min-h-screen bg-[#0f0f0f] text-white pt-24 pb-12">
       <div className="max-w-4xl mx-auto px-4">
-        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
             <button
@@ -197,36 +204,7 @@ export default function EditStory() {
           </div>
         </div>
 
-        {/* Form */}
         <div className="space-y-6">
-          {/* Cover Image */}
-          <div className="bg-[#1a1a1a] rounded-2xl p-6 border border-[#2a2a2a]">
-            <label className="block text-sm text-gray-400 mb-3">รูปปก</label>
-            <div className="relative aspect-[3/4] max-w-sm mx-auto rounded-xl overflow-hidden bg-[#2a2a2a]">
-              {(coverImage || story?.coverImage) && (
-                <img
-                  src={coverImage || story?.coverImage}
-                  alt="Cover"
-                  className="w-full h-full object-cover"
-                />
-              )}
-              <label className="absolute inset-0 flex items-center justify-center bg-black/50 hover:bg-black/70 transition cursor-pointer">
-                <div className="text-center">
-                  <Upload className="w-12 h-12 mx-auto mb-2" />
-                  <p className="text-sm">{uploading ? 'กำลังอัปโหลด...' : 'เปลี่ยนรูปปก'}</p>
-                </div>
-                <input
-                  type="file"
-                  className="hidden"
-                  accept="image/*"
-                  onChange={handleCoverUpload}
-                  disabled={uploading}
-                />
-              </label>
-            </div>
-          </div>
-
-          {/* Title */}
           <div className="bg-[#1a1a1a] rounded-2xl p-6 border border-[#2a2a2a]">
             <label className="block text-sm text-gray-400 mb-3">ชื่อเรื่อง</label>
             <input
@@ -238,7 +216,6 @@ export default function EditStory() {
             />
           </div>
 
-          {/* Description */}
           <div className="bg-[#1a1a1a] rounded-2xl p-6 border border-[#2a2a2a]">
             <label className="block text-sm text-gray-400 mb-3">เรื่องย่อ</label>
             <textarea
@@ -249,70 +226,95 @@ export default function EditStory() {
             />
           </div>
 
-          {/* Category & Status */}
-          <div className="grid grid-cols-2 gap-6">
-            <div className="bg-[#1a1a1a] rounded-2xl p-6 border border-[#2a2a2a]">
-              <label className="block text-sm text-gray-400 mb-3">หมวดหมู่</label>
-              <select
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full bg-[#2a2a2a] border border-[#3a3a3a] rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500"
-              >
-                <option value="">เลือกหมวดหมู่</option>
-                <option value="แฟนตาซี">แฟนตาซี</option>
-                <option value="โรแมนติก">โรแมนติก</option>
-                <option value="ผจญภัย">ผจญภัย</option>
-                <option value="สยองขวัญ">สยองขวัญ</option>
-                <option value="ดราม่า">ดราม่า</option>
-                <option value="ตลก">ตลก</option>
-              </select>
-            </div>
+          <div className="bg-[#1a1a1a] rounded-2xl p-6 border border-[#2a2a2a]">
+            <label className="block text-sm text-gray-400 mb-3">หมวดหมู่</label>
+            <select
+              value={formData.category}
+              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              className="w-full bg-[#2a2a2a] border border-[#3a3a3a] rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500"
+            >
+              <option value="">เลือกหมวดหมู่</option>
+              <option value="ความรักโรแมนติก">ความรักโรแมนติก</option>
+              <option value="ผจญภัย">ผจญภัย</option>
+              <option value="นิยายวิทยาศาสตร์">นิยายวิทยาศาสตร์</option>
+              <option value="แฟนตาซี">แฟนตาซี</option>
+              <option value="ลึกลับ">ลึกลับ</option>
+              <option value="สยองขวัญ">สยองขวัญ</option>
+              <option value="ประวัติศาสตร์">ประวัติศาสตร์</option>
+              <option value="อื่น ๆ">อื่น ๆ</option>
+            </select>
+          </div>
 
-            <div className="bg-[#1a1a1a] rounded-2xl p-6 border border-[#2a2a2a]">
-              <label className="block text-sm text-gray-400 mb-3">สถานะ</label>
-              <select
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full bg-[#2a2a2a] border border-[#3a3a3a] rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500"
-              >
-                <option value="กำลังเขียน">กำลังเขียน</option>
-                <option value="จบแล้ว">จบแล้ว</option>
-                <option value="พักเขียน">พักเขียน</option>
-              </select>
+          <div className="bg-[#1a1a1a] rounded-2xl p-6 border border-[#2a2a2a]">
+            <label className="block text-sm text-gray-400 mb-3">สถานะ</label>
+            <select
+              value={formData.status}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+              className="w-full bg-[#2a2a2a] border border-[#3a3a3a] rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500"
+            >
+              <option value="กำลังเขียน">กำลังเขียน</option>
+              <option value="เสร็จสิ้น">เสร็จสิ้น</option>
+              <option value="หยุดชั่วคราว">หยุดชั่วคราว</option>
+            </select>
+          </div>
+
+          <div className="bg-[#1a1a1a] rounded-2xl p-6 border border-[#2a2a2a]">
+            <label className="block text-sm text-gray-400 mb-3">ปก</label>
+            <div className="flex items-center gap-4">
+              {story?.coverImage && (
+                <img
+                  src={story.coverImage}
+                  alt="Cover"
+                  className="w-24 h-32 object-cover rounded-lg"
+                />
+              )}
+              <label className="flex-1">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleCoverUpload}
+                  disabled={uploading}
+                  className="hidden"
+                />
+                <div className="px-4 py-3 rounded-xl bg-[#2a2a2a] border border-[#3a3a3a] hover:border-purple-500 transition cursor-pointer flex items-center gap-2">
+                  <Upload size={18} />
+                  {uploading ? 'กำลังอัปโหลด...' : 'เลือกรูปปก'}
+                </div>
+              </label>
             </div>
           </div>
 
-          {/* Tags */}
           <div className="bg-[#1a1a1a] rounded-2xl p-6 border border-[#2a2a2a]">
             <label className="block text-sm text-gray-400 mb-3">แท็ก</label>
-            <div className="flex gap-2 mb-3">
+            <div className="flex gap-2 mb-4">
               <input
                 type="text"
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
-                className="flex-1 bg-[#2a2a2a] border border-[#3a3a3a] rounded-xl px-4 py-2 focus:outline-none focus:border-purple-500"
+                className="flex-1 bg-[#2a2a2a] border border-[#3a3a3a] rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500"
                 placeholder="เพิ่มแท็ก..."
               />
               <button
                 onClick={handleAddTag}
-                className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 transition"
+                className="px-6 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 transition flex items-center gap-2"
               >
                 <Plus size={18} />
+                เพิ่ม
               </button>
             </div>
             <div className="flex flex-wrap gap-2">
               {formData.tags.map((tag, index) => (
                 <span
                   key={index}
-                  className="px-3 py-1 rounded-full bg-purple-500/20 text-purple-400 text-sm flex items-center gap-2"
+                  className="px-3 py-1 rounded-full text-sm bg-purple-600 text-white flex items-center gap-2"
                 >
-                  {tag}
+                  #{tag}
                   <button
                     onClick={() => handleRemoveTag(tag)}
-                    className="hover:text-red-400 transition"
+                    className="hover:text-red-300 transition"
                   >
-                    <Trash2 size={14} />
+                    <X size={14} />
                   </button>
                 </span>
               ))}
