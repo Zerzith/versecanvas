@@ -308,7 +308,18 @@ const StoryDetail = () => {
             </div>
 
             <div className="bg-[#1a1a1a] rounded-2xl p-6 border border-[#2a2a2a]">
-              <h2 className="text-xl font-bold mb-4">รายการตอน ({chapters.length} ตอน)</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold">รายการตอน ({chapters.length} ตอน)</h2>
+                {currentUser && story.authorId === currentUser.uid && (
+                  <Link
+                    to={`/add-chapter/${storyId}`}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 font-medium transition"
+                  >
+                    <Plus size={18} />
+                    เพิ่มตอน
+                  </Link>
+                )}
+              </div>
               <div className="space-y-2">
                 {chapters.map((chapter) => (
                   <button
