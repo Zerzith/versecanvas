@@ -48,46 +48,50 @@ const Explore = () => {
       const storiesQuery = query(collection(db, 'stories'), orderBy('createdAt', 'desc'), limit(20));
       const storiesSnapshot = await getDocs(storiesQuery);
       const storiesData = await Promise.all(
-        storiesSnapshot.docs.map(async (doc) => {
-          const data = doc.data();
-          const socialCounts = await fetchSocialCounts(doc.id, 'story');
-          return {
-            id: doc.id,
-            type: 'story',
-            title: data.title,
-            author: data.authorName,
-            authorId: data.authorId,
-            image: data.coverImage,
-            description: data.description,
-            category: data.category,
-            views: socialCounts.views,
-            likes: socialCounts.likes,
-            createdAt: data.createdAt?.toDate() || new Date()
-          };
-        })
+        storiesSnapshot.docs
+          .filter(doc => !doc.data().hidden) // Filter out hidden stories
+          .map(async (doc) => {
+            const data = doc.data();
+            const socialCounts = await fetchSocialCounts(doc.id, 'story');
+            return {
+              id: doc.id,
+              type: 'story',
+              title: data.title,
+              author: data.authorName,
+              authorId: data.authorId,
+              image: data.coverImage,
+              description: data.description,
+              category: data.category,
+              views: socialCounts.views,
+              likes: socialCounts.likes,
+              createdAt: data.createdAt?.toDate() || new Date()
+            };
+          })
       );
 
       // Fetch artworks
       const artworksQuery = query(collection(db, 'artworks'), orderBy('createdAt', 'desc'), limit(20));
       const artworksSnapshot = await getDocs(artworksQuery);
       const artworksData = await Promise.all(
-        artworksSnapshot.docs.map(async (doc) => {
-          const data = doc.data();
-          const socialCounts = await fetchSocialCounts(doc.id, 'artwork');
-          return {
-            id: doc.id,
-            type: 'artwork',
-            title: data.title,
-            author: data.artistName,
-            authorId: data.artistId,
-            image: data.imageUrl,
-            description: data.description,
-            category: data.category,
-            views: socialCounts.views,
-            likes: socialCounts.likes,
-            createdAt: data.createdAt?.toDate() || new Date()
-          };
-        })
+        artworksSnapshot.docs
+          .filter(doc => !doc.data().hidden) // Filter out hidden artworks
+          .map(async (doc) => {
+            const data = doc.data();
+            const socialCounts = await fetchSocialCounts(doc.id, 'artwork');
+            return {
+              id: doc.id,
+              type: 'artwork',
+              title: data.title,
+              author: data.artistName,
+              authorId: data.artistId,
+              image: data.imageUrl,
+              description: data.description,
+              category: data.category,
+              views: socialCounts.views,
+              likes: socialCounts.likes,
+              createdAt: data.createdAt?.toDate() || new Date()
+            };
+          })
       );
 
       // Combine and sort by date
