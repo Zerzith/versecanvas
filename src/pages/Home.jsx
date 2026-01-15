@@ -66,7 +66,9 @@ export default function Home() {
     try {
       const storiesRef = collection(db, 'stories');
       const snapshot = await getDocs(storiesRef);
-      const stories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const stories = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(story => !story.hidden); // กรองเนื้อหาที่ถูกซ่อน
       // Sort by views or likes (simulated for now)
       const sorted = stories.sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 10);
       setPopularStories(sorted);
@@ -79,7 +81,9 @@ export default function Home() {
     try {
       const storiesRef = collection(db, 'stories');
       const snapshot = await getDocs(storiesRef);
-      const stories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const stories = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(story => !story.hidden); // กรองเนื้อหาที่ถูกซ่อน
       // Sort by created date
       const sorted = stories.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)).slice(0, 4);
       setNewStories(sorted);

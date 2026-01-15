@@ -34,7 +34,7 @@ service cloud.firestore {
     match /artworks/{artworkId} {
       allow read: if true; // ทุกคนอ่านได้
       allow create: if isSignedIn();
-      allow update: if isSignedIn();
+      allow update: if isSignedIn() || isAdmin(); // Admin สามารถแก้ไขได้ทุกอัน
       allow delete: if isSignedIn() && (
         resource.data.artistId == request.auth.uid ||
         resource.data.userId == request.auth.uid ||
@@ -48,7 +48,7 @@ service cloud.firestore {
     match /products/{productId} {
       allow read: if true; // ทุกคนอ่านได้
       allow create: if isSignedIn();
-      allow update: if isSignedIn();
+      allow update: if isSignedIn() || isAdmin(); // Admin สามารถแก้ไขได้ทุกอัน
       allow delete: if isSignedIn() && (
         resource.data.sellerId == request.auth.uid ||
         resource.data.userId == request.auth.uid ||
@@ -62,7 +62,7 @@ service cloud.firestore {
     match /stories/{storyId} {
       allow read: if true; // ทุกคนอ่านได้
       allow create: if isSignedIn();
-      allow update: if isSignedIn();
+      allow update: if isSignedIn() || isAdmin(); // Admin สามารถแก้ไขได้ทุกอัน
       allow delete: if isSignedIn() && (
         resource.data.userId == request.auth.uid ||
         resource.data.authorId == request.auth.uid ||
