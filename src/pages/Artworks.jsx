@@ -61,32 +61,21 @@ const Artworks = ({ currentLanguage }) => {
   const fetchArtworks = async () => {
     setLoading(true);
     try {
-      let q;
-      // กรอง artworks ที่ไม่ถูกซ่อน
-      if (sortBy === 'popular') {
-        q = query(
-          collection(db, 'artworks'), 
-          where('hidden', '!=', true),
-          orderBy('hidden'),
-          orderBy('createdAt', 'desc'), 
-          limit(50)
-        );
-      } else {
-        q = query(
-          collection(db, 'artworks'), 
-          where('hidden', '!=', true),
-          orderBy('hidden'),
-          orderBy('createdAt', 'desc'), 
-          limit(50)
-        );
-      }
+      // ดึง artworks ทั้งหมดแล้วกรองด้วย JavaScript
+      const q = query(
+        collection(db, 'artworks'),
+        orderBy('createdAt', 'desc'),
+        limit(50)
+      );
       
       const querySnapshot = await getDocs(q);
       const artworksData = await Promise.all(
-        querySnapshot.docs.map(async (doc) => {
-          const data = doc.data();
-          // ดึงยอดวิว/ยอดใจจาก Realtime Database
-          const socialCounts = await fetchSocialCounts(doc.id);
+        querySnapshot.docs
+          .filter(doc => !doc.data().hidden) // กรอง hidden ด้วย JavaScript
+          .map(async (doc) => {
+            const data = doc.data();
+            // ดึงยอดวิว/ยอดใจจาก Realtime Database
+            const socialCounts = await fetchSocialCounts(doc.id);
           
           return {
             id: doc.id,

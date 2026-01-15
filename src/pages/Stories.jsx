@@ -44,20 +44,20 @@ const Stories = () => {
   const fetchStories = async () => {
     setLoading(true);
     try {
-      // กรอง stories ที่ไม่ถูกซ่อน (hidden != true)
+      // ดึง stories ทั้งหมดแล้วกรองด้วย JavaScript
       const q = query(
-        collection(db, 'stories'), 
-        where('hidden', '!=', true),
-        orderBy('hidden'),
+        collection(db, 'stories'),
         orderBy('createdAt', 'desc')
       );
       const querySnapshot = await getDocs(q);
       
       const storiesData = await Promise.all(
-        querySnapshot.docs.map(async (doc) => {
-          const data = doc.data();
-          // ดึงยอดวิว/ยอดใจจาก Realtime Database
-          const socialCounts = await fetchSocialCounts(doc.id);
+        querySnapshot.docs
+          .filter(doc => !doc.data().hidden) // กรอง hidden ด้วย JavaScript
+          .map(async (doc) => {
+            const data = doc.data();
+            // ดึงยอดวิว/ยอดใจจาก Realtime Database
+            const socialCounts = await fetchSocialCounts(doc.id);
           
           return {
             id: doc.id,
