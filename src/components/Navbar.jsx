@@ -336,9 +336,10 @@ export default function Navbar() {
       )}
 
       {/* Notification Panel */}
-      {showNotifications && (
-        <NotificationPanel onClose={() => setShowNotifications(false)} />
-      )}
+      <NotificationPanel 
+        isOpen={showNotifications}
+        onClose={() => setShowNotifications(false)} 
+      />
     </>
   );
 }
