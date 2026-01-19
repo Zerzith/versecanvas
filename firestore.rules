@@ -93,6 +93,16 @@ service cloud.firestore {
     }
     
     // ============================================
+    // Job Applicants Collection
+    // ============================================
+    match /jobApplicants/{applicantId} {
+      allow read: if isSignedIn(); // ผู้ที่ล็อกอินอ่านได้
+      allow create: if isSignedIn(); // ทุกคนที่ล็อกอินสมัครงานได้
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn() || isAdmin();
+    }
+    
+    // ============================================
     // Work Submissions
     // ============================================
     match /workSubmissions/{submissionId} {
