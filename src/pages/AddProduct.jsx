@@ -253,7 +253,7 @@ export default function AddProduct() {
                     <img
                       src={productImagePreview}
                       alt="Preview"
-                      className="w-full h-full object-cover rounded-lg"
+                      className="relative w-full max-w-2xl rounded-lg overflow-hidden border-2 border-[#2a2a2a] mb-4"
                     />
                     <button
                       type="button"
