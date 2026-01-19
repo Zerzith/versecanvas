@@ -49,6 +49,19 @@ const Artseek = () => {
               console.error('Error fetching user profile:', err);
             }
           }
+
+          // โหลดจำนวนผู้สมัครจาก collection jobApplicants
+          try {
+            const applicantsQuery = query(
+              collection(db, 'jobApplicants'),
+              where('jobId', '==', jobData.id)
+            );
+            const applicantsSnapshot = await getDocs(applicantsQuery);
+            jobData.applicantsCount = applicantsSnapshot.size;
+          } catch (err) {
+            console.error('Error fetching applicants count:', err);
+            jobData.applicantsCount = 0;
+          }
           
           return jobData;
         })
@@ -209,7 +222,7 @@ const Artseek = () => {
                   </Link>
                   <div className="flex items-center gap-2 text-sm text-gray-400 flex-shrink-0 ml-2">
                     <Users size={16} />
-                    {job.applicants || 0}
+                    {job.applicantsCount || 0}
                   </div>
                 </div>
 

@@ -8,7 +8,7 @@ import { useEscrow } from '../contexts/EscrowContext';
 import { useCredit } from '../contexts/CreditContext';
 import { ref as dbRef, push, set, serverTimestamp } from 'firebase/database';
 import { realtimeDb, db } from '../lib/firebase';
-import { getDoc, doc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { getDoc, doc, updateDoc, collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 
 const JobDetail = () => {
   const { jobId } = useParams();
@@ -117,10 +117,8 @@ const JobDetail = () => {
           }
         }
         
-        // โหลดรายชื่อผู้สมัคร
-        if (jobData.applicantsList && jobData.applicantsList.length > 0) {
-          await loadApplicants(jobData.applicantsList);
-        }
+        // โหลดรายชื่อผู้สมัครจาก collection jobApplicants
+        await loadApplicants(jobId);
       }
     } catch (error) {
       console.error('Error fetching job:', error);
@@ -129,13 +127,20 @@ const JobDetail = () => {
     }
   };
 
-  const loadApplicants = async (applicantIds) => {
+  const loadApplicants = async (targetJobId) => {
     try {
+      const q = query(
+        collection(db, 'jobApplicants'),
+        where('jobId', '==', targetJobId)
+      );
+      const querySnapshot = await getDocs(q);
+      
       const applicantsData = await Promise.all(
-        applicantIds.map(async (applicantId) => {
-          const userDoc = await getDoc(doc(db, 'users', applicantId));
+        querySnapshot.docs.map(async (applicantDoc) => {
+          const applicantData = applicantDoc.data();
+          const userDoc = await getDoc(doc(db, 'users', applicantData.userId));
           if (userDoc.exists()) {
-            return { id: applicantId, ...userDoc.data() };
+            return { id: applicantData.userId, ...userDoc.data(), applicantDocId: applicantDoc.id };
           }
           return null;
         })
@@ -149,11 +154,13 @@ const JobDetail = () => {
   const checkIfApplied = async () => {
     if (!currentUser || !jobId) return;
     try {
-      const jobDoc = await getDoc(doc(db, 'jobs', jobId));
-      if (jobDoc.exists()) {
-        const jobData = jobDoc.data();
-        setHasApplied(jobData.applicantsList?.includes(currentUser.uid) || false);
-      }
+      const q = query(
+        collection(db, 'jobApplicants'),
+        where('jobId', '==', jobId),
+        where('userId', '==', currentUser.uid)
+      );
+      const querySnapshot = await getDocs(q);
+      setHasApplied(!querySnapshot.empty);
     } catch (error) {
       console.error('Error checking application:', error);
     }
@@ -166,18 +173,28 @@ const JobDetail = () => {
     }
 
     try {
-      const jobRef = doc(db, 'jobs', jobId);
-      const jobDoc = await getDoc(jobRef);
-      const currentApplicants = jobDoc.data().applicantsList || [];
+      // ตรวจสอบว่าเคยสมัครไปหรือยังจาก Firestore collection 'jobApplicants'
+      const q = query(
+        collection(db, 'jobApplicants'),
+        where('jobId', '==', jobId),
+        where('userId', '==', currentUser.uid)
+      );
+      const querySnapshot = await getDocs(q);
       
-      if (currentApplicants.includes(currentUser.uid)) {
+      if (!querySnapshot.empty) {
         alert('คุณได้สมัครงานนี้แล้ว');
+        setHasApplied(true);
         return;
       }
 
-      await updateDoc(jobRef, {
-        applicantsList: [...currentApplicants, currentUser.uid],
-        applicants: (jobDoc.data().applicants || 0) + 1
+      // บันทึกการสมัครงานลงใน collection 'jobApplicants'
+      await addDoc(collection(db, 'jobApplicants'), {
+        jobId: jobId,
+        userId: currentUser.uid,
+        userName: currentUser.displayName || 'Anonymous',
+        userAvatar: currentUser.photoURL || '',
+        appliedAt: serverTimestamp(),
+        status: 'pending'
       });
 
       setHasApplied(true);
@@ -185,7 +202,7 @@ const JobDetail = () => {
       fetchJobDetail();
     } catch (error) {
       console.error('Error applying for job:', error);
-      alert('เกิดข้อผิดพลาดในการสมัครงาน');
+      alert('เกิดข้อผิดพลาดในการสมัครงาน: ' + error.message);
     }
   };
 
