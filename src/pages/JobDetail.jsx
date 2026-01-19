@@ -31,6 +31,9 @@ const JobDetail = () => {
   const [hasApplied, setHasApplied] = useState(false);
   const [workSubmitted, setWorkSubmitted] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showSubmitWork, setShowSubmitWork] = useState(false);
+  const [workLink, setWorkLink] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
 
   useEffect(() => {
@@ -242,7 +245,42 @@ const JobDetail = () => {
     }
   };
 
+  const handleSubmitWork = async () => {
+    if (!workLink.trim()) {
+      alert('กรุณาใส่ลิงก์ส่งงาน');
+      return;
+    }
 
+    try {
+      setSubmitting(true);
+      const submissionData = {
+        jobId,
+        workerId: currentUser.uid,
+        workerName: currentUser.displayName || 'Anonymous',
+        workLink,
+        submittedAt: serverTimestamp(),
+        status: 'pending'
+      };
+
+      // บันทึกการส่งงานลงใน collection 'workSubmissions'
+      await addDoc(collection(db, 'workSubmissions'), submissionData);
+      
+      // หมายเหตุ: เราไม่อัปเดตสถานะในตาราง 'jobs' โดยตรงที่นี่ 
+      // เพราะผู้สมัครไม่มีสิทธิ์แก้ไขเอกสารงานของเจ้าของงาน (Permission Denied)
+      // เจ้าของงานจะเป็นผู้กดรับงานและเปลี่ยนสถานะเอง หรือระบบจะเช็คจาก workSubmissions แทน
+
+      alert('ส่งงานสำเร็จ! รอเจ้าของงานตรวจสอบ');
+      setWorkLink('');
+      setShowSubmitWork(false);
+      fetchJobDetail();
+      checkWorkSubmission();
+    } catch (error) {
+      console.error('Error submitting work:', error);
+      alert('เกิดข้อผิดพลาดในการส่งงาน: ' + error.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const handleContactClick = () => {
     if (!currentUser) {
@@ -354,7 +392,7 @@ ${message}`,
                       {new Date(job.createdAt).toLocaleDateString('th-TH')}
                     </span>
                     <span>•</span>
-                    <span>{job.applicants} ผู้สมัคร</span>
+                    <span>{applicants.length} ผู้สมัคร</span>
                   </div>
                 </div>
                 <span className={`px-4 py-2 rounded-full text-sm font-medium ${
@@ -498,7 +536,6 @@ ${message}`,
                         : 'bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700'
                     }`}
                   >
-                    <Briefcase size={18} />
                     {hasApplied ? 'สมัครแล้ว' : 'สมัครงานนี้'}
                   </button>
                   <button
@@ -509,6 +546,17 @@ ${message}`,
                     ติดต่อผู้ว่าจ้าง
                   </button>
                 </>
+              )}
+
+              {/* Submit Work Button - สำหรับศิลปินที่ได้รับเลือก */}
+              {currentUser && job.acceptedFreelancerId === currentUser.uid && job.status === 'in_progress' && !workSubmitted && (
+                <button
+                  onClick={() => setShowSubmitWork(true)}
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 font-medium transition flex items-center justify-center gap-2 mb-3"
+                >
+                  <Send size={18} />
+                  ส่งงาน
+                </button>
               )}
 
               {/* Applicants Button - เฉพาะเจ้าของงาน (ลูกค้า) */}
@@ -556,6 +604,43 @@ ${message}`,
           </div>
         </div>
       </div>
+
+      {/* Submit Work Modal */}
+      {showSubmitWork && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+          <div className="bg-[#1a1a1a] rounded-2xl max-w-lg w-full p-6 border border-[#2a2a2a]">
+            <h2 className="text-2xl font-bold mb-4">ส่งงาน</h2>
+            <p className="text-gray-400 mb-6">
+              ใส่ลิงก์ผลงานของคุณ (เช่น Google Drive, Dropbox หรือลิงก์รูปภาพ)
+            </p>
+
+            <input
+              type="url"
+              value={workLink}
+              onChange={(e) => setWorkLink(e.target.value)}
+              placeholder="https://..."
+              className="w-full bg-[#2a2a2a] border border-[#3a3a3a] rounded-xl p-4 focus:outline-none focus:border-purple-500 mb-4"
+            />
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowSubmitWork(false)}
+                className="flex-1 py-3 rounded-xl bg-[#2a2a2a] hover:bg-[#3a3a3a] transition"
+                disabled={submitting}
+              >
+                ยกเลิก
+              </button>
+              <button
+                onClick={handleSubmitWork}
+                disabled={!workLink.trim() || submitting}
+                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 transition flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {submitting ? 'กำลังส่ง...' : 'ยืนยันการส่งงาน'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Escrow Payment Modal */}
       {showEscrowModal && (
