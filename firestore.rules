@@ -84,8 +84,10 @@ service cloud.firestore {
     match /jobs/{jobId} {
       allow read: if true; // ทุกคนอ่านได้
       allow create: if isSignedIn();
+      // อนุญาตให้ update ได้ถ้าเป็นเจ้าของงาน, ผู้สมัคร (เพิ่ม applicantsList), หรือ Admin
       allow update: if isSignedIn() && (
         resource.data.userId == request.auth.uid ||
+        request.auth.uid in request.resource.data.applicantsList ||
         isAdmin()
       );
       allow delete: if isSignedIn() && (
