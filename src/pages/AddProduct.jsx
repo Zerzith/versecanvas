@@ -249,11 +249,11 @@ export default function AddProduct() {
               </label>
               <div className="flex flex-col items-center">
                 {productImagePreview ? (
-                  <div className="relative w-full max-w-md aspect-video mb-4">
+                  <div className="relative w-48 h-32 rounded-lg overflow-hidden border-2 border-[#2a2a2a]">
                     <img
                       src={productImagePreview}
                       alt="Preview"
-                      className="relative w-full max-w-2xl rounded-lg overflow-hidden border-2 border-[#2a2a2a] mb-4"
+                      className="w-full h-full object-cover"
                     />
                     <button
                       type="button"
