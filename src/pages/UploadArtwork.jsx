@@ -169,7 +169,7 @@ const UploadArtwork = ({ currentLanguage }) => {
                     <img
                       src={imagePreview}
                       alt="Artwork preview"
-                      className="w-full h-auto object-contain max-h-96"
+                      className="w-full h-auto object-contain max-h-64"
                     />
                     <button
                       type="button"
