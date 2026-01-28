@@ -39,7 +39,7 @@ export default function Navbar() {
       home: 'หน้าแรก',
       stories: 'นิยาย',
       artworks: 'ผลงาน',
-      artseek: 'Artseek',
+      artseek: 'ตามหา',
       explore: 'สำรวจ',
       shop: 'ร้านค้า',
       login: 'เข้าสู่ระบบ',
