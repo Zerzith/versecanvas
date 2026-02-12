@@ -24,8 +24,8 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if true; // ทุกคนอ่านได้
       allow create: if isSignedIn();
-      // อนุญาตให้ update ถ้าเป็นเจ้าของ หรือเป็น admin 
-      // หรือถ้าเป็นการโอนเครดิต (อนุญาตให้อัปเดตเฉพาะฟิลด์ credits)
+      // ปรับปรุง: อนุญาตให้อัปเดต credits ได้ถ้าล็อกอิน (สำหรับการโอนเครดิต)
+      // หรืออัปเดตข้อมูลอื่นถ้าเป็นเจ้าของหรือ admin
       allow update: if isSignedIn() && (
         isOwner(userId) || 
         isAdmin() || 
@@ -40,7 +40,7 @@ service cloud.firestore {
     match /artworks/{artworkId} {
       allow read: if true; // ทุกคนอ่านได้
       allow create: if isSignedIn();
-      allow update: if isSignedIn() || isAdmin(); // Admin สามารถแก้ไขได้ทุกอัน
+      allow update: if isSignedIn() || isAdmin();
       allow delete: if isSignedIn() && (
         resource.data.artistId == request.auth.uid ||
         resource.data.userId == request.auth.uid ||
@@ -54,7 +54,7 @@ service cloud.firestore {
     match /products/{productId} {
       allow read: if true; // ทุกคนอ่านได้
       allow create: if isSignedIn();
-      allow update: if isSignedIn() || isAdmin(); // Admin สามารถแก้ไขได้ทุกอัน
+      allow update: if isSignedIn() || isAdmin();
       allow delete: if isSignedIn() && (
         resource.data.sellerId == request.auth.uid ||
         resource.data.userId == request.auth.uid ||
@@ -68,29 +68,27 @@ service cloud.firestore {
     match /stories/{storyId} {
       allow read: if true; // ทุกคนอ่านได้
       allow create: if isSignedIn();
-      allow update: if isSignedIn() || isAdmin(); // Admin สามารถแก้ไขได้ทุกอัน
+      allow update: if isSignedIn() || isAdmin();
       allow delete: if isSignedIn() && (
         resource.data.userId == request.auth.uid ||
         resource.data.authorId == request.auth.uid ||
         isAdmin()
       );
       
-      // Chapters Subcollection
       match /chapters/{chapterId} {
-        allow read: if true; // ทุกคนอ่านได้
+        allow read: if true;
         allow create: if isSignedIn();
         allow update: if isSignedIn() || isAdmin();
-        allow delete: if isSignedIn() || isAdmin(); // แอดมินสามารถลบ chapter ได้
+        allow delete: if isSignedIn() || isAdmin();
       }
     }
     
     // ============================================
-    // Jobs Collection (Commission / Art Requests)
+    // Jobs Collection
     // ============================================
     match /jobs/{jobId} {
-      allow read: if true; // ทุกคนอ่านได้
+      allow read: if true;
       allow create: if isSignedIn();
-      // อนุญาตให้ทุกคนที่ล็อกอิน update ได้ (สมัครงาน, รับงาน, อัพเดตสถานะ)
       allow update: if isSignedIn();
       allow delete: if isSignedIn() && (
         resource.data.userId == request.auth.uid ||
@@ -102,8 +100,8 @@ service cloud.firestore {
     // Job Applicants Collection
     // ============================================
     match /jobApplicants/{applicantId} {
-      allow read: if isSignedIn(); // ผู้ที่ล็อกอินอ่านได้
-      allow create: if isSignedIn(); // ทุกคนที่ล็อกอินสมัครงานได้
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
       allow update: if isSignedIn();
       allow delete: if isSignedIn() || isAdmin();
     }
@@ -112,7 +110,7 @@ service cloud.firestore {
     // Work Submissions
     // ============================================
     match /workSubmissions/{submissionId} {
-      allow read: if isSignedIn(); // ผู้ที่ล็อกอินอ่านได้
+      allow read: if isSignedIn();
       allow create: if isSignedIn();
       allow update: if isSignedIn() || isAdmin();
       allow delete: if isSignedIn() || isAdmin();
@@ -129,7 +127,7 @@ service cloud.firestore {
         resource.data.sellerId == request.auth.uid ||
         isAdmin()
       );
-      allow delete: if isAdmin(); // เฉพาะแอดมินลบได้
+      allow delete: if isAdmin();
     }
     
     // ============================================
@@ -137,13 +135,13 @@ service cloud.firestore {
     // ============================================
     match /transactions/{transactionId} {
       allow read: if isSignedIn();
-      // อนุญาตให้สร้าง transaction ได้ถ้าล็อกอิน (สำหรับบันทึกประวัติการโอน/รับ)
+      // ปรับปรุง: อนุญาตให้สร้าง transaction ได้ถ้าล็อกอิน (สำหรับการโอน/รับเครดิต)
       allow create: if isSignedIn();
       allow update: if isSignedIn() && (
         resource.data.userId == request.auth.uid ||
         isAdmin()
       );
-      allow delete: if isAdmin(); // เฉพาะแอดมินลบได้
+      allow delete: if isAdmin();
     }
     
     // ============================================
@@ -153,17 +151,17 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow create: if isSignedIn();
       allow update: if isSignedIn() || isAdmin();
-      allow delete: if isAdmin(); // เฉพาะแอดมินลบได้
+      allow delete: if isAdmin();
     }
     
     // ============================================
-    // Escrow Collection (สำหรับระบบ Escrow)
+    // Escrow Collection
     // ============================================
     match /escrow/{escrowId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn();
       allow update: if isSignedIn() || isAdmin();
-      allow delete: if isAdmin(); // เฉพาะแอดมินลบได้
+      allow delete: if isAdmin();
     }
     
     // ============================================
@@ -176,7 +174,7 @@ service cloud.firestore {
         resource.data.userId == request.auth.uid ||
         isAdmin()
       );
-      allow delete: if isAdmin(); // เฉพาะแอดมินลบได้
+      allow delete: if isAdmin();
     }
     
     // ============================================
@@ -184,7 +182,7 @@ service cloud.firestore {
     // ============================================
     match /notifications/{notificationId} {
       allow read: if isSignedIn();
-      // อนุญาตให้สร้าง notification ได้ถ้าล็อกอิน (สำหรับแจ้งเตือนผู้รับเครดิต)
+      // ปรับปรุง: อนุญาตให้ทุกคนที่ล็อกอินสร้างการแจ้งเตือนได้ (เช่น เมื่อโอนเครดิตให้ผู้อื่น)
       allow create: if isSignedIn();
       allow update: if isSignedIn() && (
         resource.data.userId == request.auth.uid ||
@@ -216,7 +214,7 @@ service cloud.firestore {
     // Follows Collection
     // ============================================
     match /follows/{followId} {
-      allow read: if true; // ทุกคนอ่านได้
+      allow read: if true;
       allow create: if isSignedIn();
       allow update: if isSignedIn() && (
         resource.data.followerId == request.auth.uid ||
@@ -240,7 +238,7 @@ service cloud.firestore {
     // Likes Collection
     // ============================================
     match /likes/{likeId} {
-      allow read: if true; // ทุกคนอ่านได้
+      allow read: if true;
       allow create: if isSignedIn();
       allow update: if isSignedIn() && (
         resource.data.userId == request.auth.uid ||
@@ -256,7 +254,7 @@ service cloud.firestore {
     // Comments Collection
     // ============================================
     match /comments/{commentId} {
-      allow read: if true; // ทุกคนอ่านได้
+      allow read: if true;
       allow create: if isSignedIn();
       allow update: if isSignedIn() && (
         resource.data.userId == request.auth.uid ||
@@ -274,15 +272,15 @@ service cloud.firestore {
     match /reports/{reportId} {
       allow read: if isSignedIn() || isAdmin();
       allow create: if isSignedIn();
-      allow update: if isAdmin(); // เฉพาะแอดมินแก้ไขได้
-      allow delete: if isAdmin(); // เฉพาะแอดมินลบได้
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
     }
     
     // ============================================
     // Reviews Collection
     // ============================================
     match /reviews/{reviewId} {
-      allow read: if true; // ทุกคนอ่านได้
+      allow read: if true;
       allow create: if isSignedIn();
       allow update: if isSignedIn() && (
         resource.data.userId == request.auth.uid ||
@@ -298,7 +296,7 @@ service cloud.firestore {
     // Art Requests Collection
     // ============================================
     match /artRequests/{requestId} {
-      allow read: if true; // ทุกคนอ่านได้
+      allow read: if true;
       allow create: if isSignedIn();
       allow update: if isSignedIn() && (
         resource.data.userId == request.auth.uid ||
@@ -311,15 +309,14 @@ service cloud.firestore {
     }
     
     // ============================================
-    // Conversations Collection (ระบบแชท)
+    // Conversations Collection
     // ============================================
     match /conversations/{conversationId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn();
       allow update: if isSignedIn() || isAdmin();
-      allow delete: if isAdmin(); // เฉพาะแอดมินลบได้
+      allow delete: if isAdmin();
       
-      // Messages Subcollection
       match /messages/{messageId} {
         allow read: if isSignedIn();
         allow create: if isSignedIn();
@@ -338,31 +335,29 @@ service cloud.firestore {
     // Chapter Purchases Collection
     // ============================================
     match /chapterPurchases/{purchaseId} {
-      // อ่านได้เฉพาะของตัวเองหรือ admin
       allow read: if isSignedIn() && (
         resource.data.userId == request.auth.uid ||
         isAdmin()
       );
-      // สร้างได้เมื่อล็อกอินและเป็นการซื้อของตัวเอง
       allow create: if isSignedIn() && 
         request.resource.data.userId == request.auth.uid;
-      // แอดมินสามารถแก้ไขและลบได้
       allow update: if isAdmin();
       allow delete: if isAdmin();
     }
     
     // ============================================
-    // Credits Collection (ระบบเครดิต)
+    // Credits Collection
     // ============================================
     match /credits/{userId} {
       allow read: if isSignedIn() && (isOwner(userId) || isAdmin());
       allow create: if isSignedIn();
+      // ปรับปรุง: อนุญาตให้อัปเดตเครดิตได้สำหรับการโอน
       allow update: if isSignedIn() && (
         isOwner(userId) || 
         isAdmin() ||
         (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['credits']))
       );
-      allow delete: if isAdmin(); // เฉพาะแอดมินลบได้
+      allow delete: if isAdmin();
     }
   }
 }
